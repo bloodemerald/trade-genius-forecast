@@ -35,10 +35,15 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const prompt = `
-        Analyze this trading chart screenshot and provide the following data in a strict JSON format:
+        You are a trading chart analysis expert. Look at this trading chart screenshot and extract the following information:
+        1. Most importantly, find the Ethereum token contract address. It might be in the URL, title, or somewhere in the interface.
+           Look for a string that looks like an Ethereum address (0x followed by 40 hexadecimal characters).
+        2. Also analyze the chart and provide the following data.
+
+        Return the data in this strict JSON format:
         {
           "symbol": "string (e.g., 'BTC/USD')",
-          "tokenAddress": "string (the Ethereum contract address if visible in the image)",
+          "tokenAddress": "string (the Ethereum contract address - IMPORTANT: look carefully for this)",
           "price": [number, number, number, number] (open, high, low, close),
           "volume": number (24h volume),
           "indicators": {
@@ -48,7 +53,10 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
             "RSI_14": number
           }
         }
-        If you can't find the token address, set it to null. Only return the JSON data, no additional text.
+
+        If you find multiple potential token addresses, choose the one that appears to be the main token being traded.
+        If you absolutely cannot find a token address after thorough inspection, set it to null.
+        Only return the JSON data, no additional text.
       `;
 
       const result = await model.generateContent([
