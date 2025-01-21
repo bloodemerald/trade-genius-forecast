@@ -6,7 +6,7 @@ import ImageUploader from "@/components/ImageUploader";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ThemeProvider } from "next-themes";
 import { Brain, Loader2 } from "lucide-react";
-import { useToast, toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TradingData {
@@ -47,16 +47,7 @@ const Index = () => {
     sentiment: 50,
     confidence: 0
   });
-
-  const calculateSentiment = (rsi: number): number => {
-    if (rsi >= 70) return 100; // Strongly Bullish
-    if (rsi >= 60) return 75;  // Moderately Bullish
-    if (rsi >= 45) return 60;  // Slightly Bullish
-    if (rsi >= 40) return 50;  // Neutral
-    if (rsi >= 30) return 40;  // Slightly Bearish
-    if (rsi >= 20) return 25;  // Moderately Bearish
-    return 0;                  // Strongly Bearish
-  };
+  const { toast } = useToast();
 
   const calculateScenarios = (currentPrice: number) => {
     const volatility = Math.abs(data.price[1] - data.price[2]) / data.price[3] * 100;

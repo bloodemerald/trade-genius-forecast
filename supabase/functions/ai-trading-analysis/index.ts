@@ -21,6 +21,22 @@ serve(async (req) => {
 
     console.log('Analyzing market data:', marketData);
 
+    // Calculate initial sentiment based on RSI
+    let initialSentiment = 50; // Neutral base
+    if (marketData.indicators.RSI_14 > 70) initialSentiment = 85;
+    else if (marketData.indicators.RSI_14 > 60) initialSentiment = 70;
+    else if (marketData.indicators.RSI_14 > 50) initialSentiment = 60;
+    else if (marketData.indicators.RSI_14 < 30) initialSentiment = 15;
+    else if (marketData.indicators.RSI_14 < 40) initialSentiment = 30;
+    else if (marketData.indicators.RSI_14 < 50) initialSentiment = 40;
+
+    // Calculate initial confidence based on technical indicators
+    let initialConfidence = 50;
+    const volumeStrength = marketData.volume > 1000000 ? 20 : marketData.volume > 500000 ? 15 : 10;
+    const trendStrength = Math.abs(marketData.indicators.MACD[0]) > 0.001 ? 20 : 10;
+    const rsiStrength = (marketData.indicators.RSI_14 > 70 || marketData.indicators.RSI_14 < 30) ? 20 : 10;
+    initialConfidence = Math.min(95, volumeStrength + trendStrength + rsiStrength);
+
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
       method: 'POST',
       headers: {
@@ -39,6 +55,10 @@ serve(async (req) => {
               Technical Indicators:
               - RSI(14): ${marketData.indicators.RSI_14}
               - MACD: ${marketData.indicators.MACD.join(', ')}
+              
+              Initial Technical Analysis:
+              - Market Sentiment Score: ${initialSentiment}
+              - Confidence Score: ${initialConfidence}
 
               Analyze this data and provide:
               1. Market Sentiment Score (0-100):
@@ -93,16 +113,35 @@ serve(async (req) => {
       throw new Error('Invalid response structure from Gemini API');
     }
 
+    // Parse the AI response and combine with our technical analysis
     const aiResponse = JSON.parse(result.candidates[0].content.parts[0].text.trim());
-    console.log('Parsed AI response:', aiResponse);
+    
+    // Blend AI sentiment with technical sentiment
+    const finalSentiment = Math.round((aiResponse.sentiment + initialSentiment) / 2);
+    
+    // Blend AI confidence with technical confidence
+    const finalConfidence = Math.round((aiResponse.confidence + initialConfidence) / 2);
 
-    return new Response(JSON.stringify(aiResponse), {
+    const finalResponse = {
+      suggestion: aiResponse.suggestion,
+      sentiment: finalSentiment,
+      confidence: finalConfidence
+    };
+
+    console.log('Final analysis response:', finalResponse);
+
+    return new Response(JSON.stringify(finalResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Analysis error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        suggestion: "Unable to analyze market conditions at this time.",
+        sentiment: 50,  // Neutral sentiment as fallback
+        confidence: 0   // Zero confidence when error occurs
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
