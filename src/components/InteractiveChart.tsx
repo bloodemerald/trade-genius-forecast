@@ -17,14 +17,27 @@ export const InteractiveChart = ({ tokenAddress }: InteractiveChartProps) => {
 
   useEffect(() => {
     if (tokenAddress) {
-      setChartUrl(`https://dexscreener.com/ethereum/${tokenAddress}?embed=1&theme=dark`);
+      // Clean the token address to ensure it's properly formatted
+      const cleanAddress = tokenAddress.trim().toLowerCase();
+      const url = `https://dexscreener.com/ethereum/${cleanAddress}?embed=1&theme=dark`;
+      console.log('Setting chart URL:', url); // Debug log
+      setChartUrl(url);
     } else {
-      // If no token address is provided, we'll show a message
       toast.info("No token address detected in the image. Please try another screenshot.");
     }
   }, [tokenAddress]);
 
-  if (!chartUrl) return null;
+  if (!chartUrl) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative backdrop-blur-md bg-[#1A1F2C]/80 rounded-xl p-6 shadow-lg border border-[#9b87f5]/20 overflow-hidden group hover:border-[#9b87f5]/40 transition-all duration-300 h-[600px] flex items-center justify-center"
+      >
+        <p className="text-white/70">Upload a trading chart to view live data</p>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -38,6 +51,8 @@ export const InteractiveChart = ({ tokenAddress }: InteractiveChartProps) => {
         title="DexScreener Chart"
         src={chartUrl}
         className="w-full h-full border-0 rounded-lg"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
       />
 
       {/* Decorative corner elements */}
