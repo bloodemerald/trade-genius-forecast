@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import ImageUploader from "@/components/ImageUploader";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ThemeProvider } from "next-themes";
-import CandlestickChart from "@/components/CandlestickChart";
 
 interface TradingData {
   symbol: string;
@@ -33,50 +32,6 @@ const Index = () => {
       RSI_14: 46.49,
     },
   });
-
-  // Sample candlestick data
-  const candlestickData = [
-    {
-      date: "2024-01-01",
-      open: 0.05265,
-      high: 0.05516,
-      low: 0.05265,
-      close: 0.05297,
-      volume: 198947,
-    },
-    {
-      date: "2024-01-02",
-      open: 0.05297,
-      high: 0.05550,
-      low: 0.05250,
-      close: 0.05450,
-      volume: 185632,
-    },
-    {
-      date: "2024-01-03",
-      open: 0.05450,
-      high: 0.05600,
-      low: 0.05400,
-      close: 0.05525,
-      volume: 201456,
-    },
-    {
-      date: "2024-01-04",
-      open: 0.05525,
-      high: 0.05700,
-      low: 0.05500,
-      close: 0.05650,
-      volume: 215789,
-    },
-    {
-      date: "2024-01-05",
-      open: 0.05650,
-      high: 0.05800,
-      low: 0.05600,
-      close: 0.05750,
-      volume: 225147,
-    },
-  ];
 
   const calculateScenarios = (currentPrice: number) => {
     const volatility = Math.abs(data.price[1] - data.price[2]) / data.price[3] * 100;
@@ -169,8 +124,6 @@ const Index = () => {
             </div>
           </div>
 
-          <CandlestickChart data={candlestickData} />
-
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -183,6 +136,7 @@ const Index = () => {
               <ImageUploader onAnalysisComplete={setData} />
             </div>
             
+            {/* Decorative corner elements */}
             <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-[#9b87f5]/30" />
             <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-[#9b87f5]/30" />
             <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-[#9b87f5]/30" />
