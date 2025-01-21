@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { TradingCard } from "@/components/TradingCard";
 import { TradeScenario } from "@/components/TradeScenario";
 import { motion } from "framer-motion";
 import ImageUploader from "@/components/ImageUploader";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
 
 interface TradingData {
   symbol: string;
@@ -30,17 +28,6 @@ const Index = () => {
       RSI_14: 46.49,
     },
   });
-
-  const [apiKey, setApiKey] = useState(localStorage.getItem('GEMINI_API_KEY') || '');
-
-  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newKey = e.target.value;
-    setApiKey(newKey);
-    localStorage.setItem('GEMINI_API_KEY', newKey);
-    if (newKey) {
-      toast.success('API key saved');
-    }
-  };
 
   const scenarios = [
     {
@@ -71,15 +58,17 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#1A1F2C] to-[#2C1A2F] text-white p-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-7xl mx-auto"
+        className="max-w-7xl mx-auto space-y-8"
       >
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">{data.symbol}</h1>
+            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#9b87f5] to-[#D6BCFA]">
+              {data.symbol}
+            </h1>
             <p className="text-gray-400 mt-1">Technical Analysis Dashboard</p>
           </div>
           <div className="text-sm text-gray-400">
@@ -87,26 +76,12 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="mb-8 p-4 bg-gray-800/50 rounded-lg">
-          <h2 className="text-xl font-semibold mb-4">Image Analysis</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Google Gemini API Key
-              </label>
-              <Input
-                type="password"
-                value={apiKey}
-                onChange={handleApiKeyChange}
-                placeholder="Enter your Gemini API key"
-                className="bg-gray-700 border-gray-600 text-white"
-              />
-            </div>
-            <ImageUploader onAnalysisComplete={setData} />
-          </div>
+        <div className="backdrop-blur-lg bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h2 className="text-xl font-semibold mb-4 text-[#9b87f5]">Image Analysis</h2>
+          <ImageUploader onAnalysisComplete={setData} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <TradingCard
             title="Current Price"
             value={data.price[3]}
@@ -130,11 +105,13 @@ const Index = () => {
           />
         </div>
 
-        <h2 className="text-xl font-semibold mb-6">Trading Scenarios</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {scenarios.map((scenario, index) => (
-            <TradeScenario key={index} {...scenario} index={index} />
-          ))}
+        <div>
+          <h2 className="text-xl font-semibold mb-6 text-[#9b87f5]">Trading Scenarios</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {scenarios.map((scenario, index) => (
+              <TradeScenario key={index} {...scenario} index={index} />
+            ))}
+          </div>
         </div>
       </motion.div>
     </div>
