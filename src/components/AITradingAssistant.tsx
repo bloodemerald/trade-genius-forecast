@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Loader2, Brain, TrendingUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MarketCondition {
   price: number;
@@ -20,26 +21,21 @@ export const AITradingAssistant = ({ marketCondition }: { marketCondition: Marke
   const analyzeMarket = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://wadzjfyhpalchlhidlyk.supabase.co/functions/v1/ai-trading-analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('ai-trading-analysis', {
+        body: {
           marketData: {
             price: marketCondition.price,
             volume: marketCondition.volume,
             rsi: marketCondition.rsi,
             macd: marketCondition.macd.join(', ')
           }
-        }),
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get AI suggestion');
+      if (error) {
+        throw error;
       }
 
-      const data = await response.json();
       setSuggestion(data.suggestion);
     } catch (error) {
       console.error('Error getting AI suggestion:', error);
