@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface InteractiveChartProps {
   price: number[];
@@ -8,19 +9,22 @@ interface InteractiveChartProps {
     MA_10: number;
     MACD: number[];
   };
+  tokenAddress?: string | null;
 }
 
-export const InteractiveChart = ({ price }: InteractiveChartProps) => {
-  const [tokenAddress, setTokenAddress] = useState("");
+export const InteractiveChart = ({ tokenAddress }: InteractiveChartProps) => {
+  const [chartUrl, setChartUrl] = useState<string>("");
 
   useEffect(() => {
-    // This is a placeholder - in reality, we would extract the token address 
-    // from the uploaded image analysis or user input
-    // For now, using a demo token (PEPE)
-    setTokenAddress("0x6982508145454ce325ddbe47a25d4ec3d2311933");
-  }, []);
+    if (tokenAddress) {
+      setChartUrl(`https://dexscreener.com/ethereum/${tokenAddress}?embed=1&theme=dark`);
+    } else {
+      // If no token address is provided, we'll show a message
+      toast.info("No token address detected in the image. Please try another screenshot.");
+    }
+  }, [tokenAddress]);
 
-  if (!tokenAddress) return null;
+  if (!chartUrl) return null;
 
   return (
     <motion.div
@@ -32,7 +36,7 @@ export const InteractiveChart = ({ price }: InteractiveChartProps) => {
       
       <iframe
         title="DexScreener Chart"
-        src={`https://dexscreener.com/ethereum/${tokenAddress}?embed=1&theme=dark`}
+        src={chartUrl}
         className="w-full h-full border-0 rounded-lg"
       />
 

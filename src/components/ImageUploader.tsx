@@ -29,7 +29,6 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
         throw new Error('API key not found');
       }
 
-      // Remove the data URL prefix to get just the base64 data
       const base64Data = imageData.split(',')[1];
       
       const genAI = new GoogleGenerativeAI(apiKey);
@@ -39,6 +38,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
         Analyze this trading chart screenshot and provide the following data in a strict JSON format:
         {
           "symbol": "string (e.g., 'BTC/USD')",
+          "tokenAddress": "string (the Ethereum contract address if visible in the image)",
           "price": [number, number, number, number] (open, high, low, close),
           "volume": number (24h volume),
           "indicators": {
@@ -48,7 +48,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
             "RSI_14": number
           }
         }
-        Only return the JSON data, no additional text.
+        If you can't find the token address, set it to null. Only return the JSON data, no additional text.
       `;
 
       const result = await model.generateContent([
@@ -65,11 +65,9 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
       const text = response.text();
       
       try {
-        // Clean the response text to ensure it only contains valid JSON
         const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
         const parsedData = JSON.parse(cleanedText);
         
-        // Validate the parsed data structure
         if (!parsedData.symbol || !Array.isArray(parsedData.price) || !parsedData.indicators) {
           throw new Error('Invalid data structure received from AI');
         }

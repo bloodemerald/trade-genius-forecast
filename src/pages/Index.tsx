@@ -7,6 +7,7 @@ import ImageUploader from "@/components/ImageUploader";
 
 interface TradingData {
   symbol: string;
+  tokenAddress: string | null;
   price: number[];
   volume: number;
   indicators: {
@@ -20,6 +21,7 @@ interface TradingData {
 const Index = () => {
   const [data, setData] = useState<TradingData>({
     symbol: "BARRON/SOL",
+    tokenAddress: null,
     price: [0.05265, 0.05516, 0.05265, 0.05297],
     volume: 198947,
     indicators: {
@@ -140,6 +142,7 @@ const Index = () => {
         <InteractiveChart 
           price={data.price}
           indicators={data.indicators}
+          tokenAddress={data.tokenAddress}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
