@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Target, ArrowDown, TrendingUp, BookOpen, Info } from "lucide-react";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
+import { PositionCalculator } from "./PositionCalculator";
 
 interface TradeScenarioProps {
   entry: number;
@@ -131,6 +132,8 @@ export const TradeScenario = ({
             />
           </div>
         </div>
+
+        <PositionCalculator entryPrice={entry} stopLoss={stopLoss} />
         
         <div className="mt-6 pt-4 border-t border-[#9b87f5]/20 relative">
           <div className="absolute -top-[1px] -left-6 w-4 h-4 border-t border-l border-[#9b87f5]/30" />
