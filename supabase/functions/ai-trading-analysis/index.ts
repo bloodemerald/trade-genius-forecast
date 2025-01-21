@@ -30,7 +30,8 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `As an expert crypto trading analyst, provide a detailed trading suggestion based on this market data:
+            text: `You are an expert cryptocurrency trading analyst. Based on this market data, provide a detailed and actionable trading suggestion:
+
               Symbol: ${marketData.symbol}
               Current Price: ${marketData.price[3]}
               Price Change: ${marketData.priceChange}%
@@ -39,16 +40,20 @@ serve(async (req) => {
               - RSI(14): ${marketData.indicators.RSI_14}
               - MACD: ${marketData.indicators.MACD.join(', ')}
 
-              Provide a concise but detailed trading suggestion that includes:
-              1. Clear directional bias (bullish/bearish/neutral)
-              2. Key price levels to watch (support/resistance)
-              3. Specific entry conditions
-              4. Stop loss placement recommendation
-              5. Take profit targets
-              6. Risk management advice
+              Analyze this data and provide a professional trading plan that includes:
+              1. Market Bias: Clear directional bias (strongly bullish, moderately bullish, neutral, moderately bearish, or strongly bearish)
+              2. Key Levels: Identify critical support and resistance levels based on the chart
+              3. Entry Strategy: Specific price levels or conditions for entry
+              4. Risk Management: 
+                - Precise stop loss placement with reasoning
+                - Multiple take profit targets (TP1, TP2, TP3)
+                - Position sizing recommendation
+              5. Risk/Reward Analysis: Calculate and explain the risk/reward ratio
 
-              Format the response as a clear, actionable trading plan in 3-4 sentences maximum.
-              Be specific about price levels and conditions.`
+              Format your response as a clear, professional trading plan in 4-5 concise but detailed sentences.
+              Use specific price levels and percentages.
+              Include clear actionable steps.
+              End with a risk warning if relevant market conditions suggest caution.`
           }]
         }],
         generationConfig: {
