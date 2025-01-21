@@ -9,22 +9,25 @@ interface TradeScenarioProps {
   takeProfit: number;
   riskReward: number;
   potential: number;
+  confidence: number;
   index: number;
 }
 
-const getScenarioExplanation = (riskReward: number, potential: number, rsi: number = 46.49) => {
+const getScenarioExplanation = (riskReward: number, potential: number, confidence: number, rsi: number = 46.49) => {
   let explanation = "";
   
-  if (rsi > 70) {
-    explanation = "Market appears overbought based on RSI indicator. Consider waiting for a pullback before entry.";
-  } else if (rsi < 30) {
-    explanation = "Market appears oversold based on RSI indicator. This could present a good entry opportunity.";
-  } else if (riskReward >= 3) {
-    explanation = "Strong risk/reward ratio suggests a favorable trading opportunity with good profit potential.";
-  } else if (potential > 20) {
-    explanation = "High potential return, but ensure your risk management aligns with your trading strategy.";
+  if (confidence >= 80) {
+    explanation = "High confidence setup with strong technical alignment. Consider following strict risk management rules.";
+  } else if (confidence >= 60) {
+    explanation = "Moderate confidence setup. Exercise caution and consider reducing position size.";
   } else {
-    explanation = "Moderate trading opportunity. Always follow your trading plan and risk management rules.";
+    explanation = "Low confidence setup. Consider waiting for better opportunities or skip this trade.";
+  }
+  
+  if (rsi > 70) {
+    explanation += " Market appears overbought based on RSI indicator.";
+  } else if (rsi < 30) {
+    explanation += " Market appears oversold based on RSI indicator.";
   }
   
   return explanation;
@@ -50,9 +53,10 @@ export const TradeScenario = ({
   takeProfit,
   riskReward,
   potential,
+  confidence,
   index,
 }: TradeScenarioProps) => {
-  const explanation = getScenarioExplanation(riskReward, potential);
+  const explanation = getScenarioExplanation(riskReward, potential, confidence);
   
   return (
     <motion.div
@@ -74,9 +78,22 @@ export const TradeScenario = ({
           </h3>
           <BookOpen className="text-[#9b87f5]" size={16} />
         </div>
-        <span className="text-sm font-medium text-[#9b87f5] bg-[#1A1F2C] px-3 py-1 rounded-full border border-[#9b87f5]/30">
-          R/R: {riskReward.toFixed(2)}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-[#9b87f5] bg-[#1A1F2C] px-3 py-1 rounded-full border border-[#9b87f5]/30">
+            R/R: {riskReward.toFixed(2)}
+          </span>
+          <span 
+            className={`text-sm font-medium px-3 py-1 rounded-full border ${
+              confidence >= 80 
+                ? "text-green-400 border-green-400/30 bg-green-400/10"
+                : confidence >= 60
+                ? "text-yellow-400 border-yellow-400/30 bg-yellow-400/10"
+                : "text-red-400 border-red-400/30 bg-red-400/10"
+            }`}
+          >
+            {confidence}% Confidence
+          </span>
+        </div>
       </div>
       
       <div className="space-y-4 relative z-10">

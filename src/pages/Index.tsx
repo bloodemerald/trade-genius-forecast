@@ -49,11 +49,17 @@ const Index = () => {
     const riskMultiplier = isOversold ? 0.8 : isOverbought ? 1.2 : 1;
     const rewardMultiplier = trendStrength > 0.005 ? 1.5 : 1;
     
+    // Calculate base confidence based on technical indicators
+    const rsiConfidence = data.indicators.RSI_14 > 70 || data.indicators.RSI_14 < 30 ? 30 : 20;
+    const macdConfidence = trendStrength > 0.005 ? 30 : 20;
+    const volumeConfidence = data.volume > 100000 ? 20 : 10;
+    
     return [
       {
         entry: currentPrice,
         stopLoss: currentPrice * (1 - volatility * 0.5 * riskMultiplier / 100),
         takeProfit: currentPrice * (1 + volatility * 1.25 * rewardMultiplier / 100),
+        confidence: Math.min(85, rsiConfidence + macdConfidence + volumeConfidence),
         get riskReward() {
           return (this.takeProfit - this.entry) / (this.entry - this.stopLoss);
         },
@@ -65,6 +71,7 @@ const Index = () => {
         entry: currentPrice,
         stopLoss: currentPrice * (1 - volatility * 0.75 * riskMultiplier / 100),
         takeProfit: currentPrice * (1 + volatility * 2.25 * rewardMultiplier / 100),
+        confidence: Math.min(75, rsiConfidence + macdConfidence + volumeConfidence - 10),
         get riskReward() {
           return (this.takeProfit - this.entry) / (this.entry - this.stopLoss);
         },
@@ -76,6 +83,7 @@ const Index = () => {
         entry: currentPrice,
         stopLoss: currentPrice * (1 - volatility * riskMultiplier / 100),
         takeProfit: currentPrice * (1 + volatility * 3.375 * rewardMultiplier / 100),
+        confidence: Math.min(65, rsiConfidence + macdConfidence + volumeConfidence - 20),
         get riskReward() {
           return (this.takeProfit - this.entry) / (this.entry - this.stopLoss);
         },
@@ -223,8 +231,8 @@ const Index = () => {
               change={0}
             />
             <TradingCard
-              title="Fear & Greed"
-              value={data.indicators.RSI_14 > 70 ? 80 : data.indicators.RSI_14 < 30 ? 20 : 50}
+              title="Market Sentiment"
+              value={data.indicators.RSI_14 > 60 ? "Bullish" : data.indicators.RSI_14 < 40 ? "Bearish" : "Neutral"}
               change={0}
             />
           </div>
