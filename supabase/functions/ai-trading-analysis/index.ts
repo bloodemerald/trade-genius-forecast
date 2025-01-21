@@ -6,7 +6,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -31,12 +30,11 @@ serve(async (req) => {
         contents: [{
           parts: [{
             text: `You are a professional trading assistant. Analyze these market conditions and provide a concise, actionable trading suggestion:
-              Price: ${marketData.price}
-              Volume: ${marketData.volume}
+              Price Change: ${marketData.priceChange}%
+              Volume Change: ${marketData.volumeChange}%
               RSI: ${marketData.rsi}
-              MACD: ${marketData.macd}
               
-              Provide a clear, concise trading recommendation in 2-3 sentences maximum. Focus on actionable advice based on technical indicators.`
+              Provide a clear, concise trading recommendation in 2-3 sentences maximum. Focus on actionable advice based on these technical indicators.`
           }]
         }],
         generationConfig: {
