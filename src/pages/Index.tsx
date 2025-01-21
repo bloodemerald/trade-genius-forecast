@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { TradingCard } from "@/components/TradingCard";
 import { TradeScenario } from "@/components/TradeScenario";
-import { InteractiveChart } from "@/components/InteractiveChart";
 import { motion } from "framer-motion";
 import ImageUploader from "@/components/ImageUploader";
 
@@ -33,13 +32,12 @@ const Index = () => {
   });
 
   const calculateScenarios = (currentPrice: number) => {
-    const volatility = Math.abs(data.price[1] - data.price[2]) / data.price[3] * 100; // Using high-low range
+    const volatility = Math.abs(data.price[1] - data.price[2]) / data.price[3] * 100;
     const averageVolume = data.volume;
     const isOverbought = data.indicators.RSI_14 > 70;
     const isOversold = data.indicators.RSI_14 < 30;
     const trendStrength = Math.abs(data.indicators.MACD[2]);
     
-    // Calculate dynamic multipliers based on market conditions
     const riskMultiplier = isOversold ? 0.8 : isOverbought ? 1.2 : 1;
     const rewardMultiplier = trendStrength > 0.005 ? 1.5 : 1;
     
@@ -138,12 +136,6 @@ const Index = () => {
           <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-[#9b87f5]/30" />
           <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-[#9b87f5]/30" />
         </motion.div>
-
-        <InteractiveChart 
-          price={data.price}
-          indicators={data.indicators}
-          tokenAddress={data.tokenAddress}
-        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <TradingCard
