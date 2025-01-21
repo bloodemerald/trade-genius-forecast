@@ -39,6 +39,16 @@ const Index = () => {
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const calculateSentiment = (rsi: number): number => {
+    if (rsi >= 70) return 100; // Strongly Bullish
+    if (rsi >= 60) return 75;  // Moderately Bullish
+    if (rsi >= 45) return 60;  // Slightly Bullish
+    if (rsi >= 40) return 50;  // Neutral
+    if (rsi >= 30) return 40;  // Slightly Bearish
+    if (rsi >= 20) return 25;  // Moderately Bearish
+    return 0;                  // Strongly Bearish
+  };
+
   const calculateScenarios = (currentPrice: number) => {
     const volatility = Math.abs(data.price[1] - data.price[2]) / data.price[3] * 100;
     const averageVolume = data.volume;
@@ -232,7 +242,7 @@ const Index = () => {
             />
             <TradingCard
               title="Market Sentiment"
-              value={data.indicators.RSI_14 > 60 ? "Bullish" : data.indicators.RSI_14 < 40 ? "Bearish" : "Neutral"}
+              value={calculateSentiment(data.indicators.RSI_14)}
               change={0}
             />
           </div>
