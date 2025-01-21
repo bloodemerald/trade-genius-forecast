@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,50 +19,70 @@ serve(async (req) => {
       throw new Error('API key not found');
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Using fetch directly since we can't import the Google AI SDK in Deno
+    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-1.0-pro-vision-latest:generateContent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `
+              You are a trading chart analysis expert. Look at this trading chart screenshot and extract the following information:
+              1. Most importantly, find the Solana token address. It might be in the URL, title, or somewhere in the interface.
+                 Look for a string that looks like a Solana address (Base58-encoded string, typically 32-44 characters long).
+              2. Also analyze the chart and provide the following data.
 
-    const prompt = `
-      You are a trading chart analysis expert. Look at this trading chart screenshot and extract the following information:
-      1. Most importantly, find the Solana token address. It might be in the URL, title, or somewhere in the interface.
-         Look for a string that looks like a Solana address (Base58-encoded string, typically 32-44 characters long).
-      2. Also analyze the chart and provide the following data.
+              Return the data in this strict JSON format:
+              {
+                "symbol": "string (e.g., 'BTC/USD')",
+                "tokenAddress": "string (the Solana token address - IMPORTANT: look carefully for this)",
+                "price": [number, number, number, number] (open, high, low, close),
+                "volume": number (24h volume),
+                "indicators": {
+                  "EMA_9": number,
+                  "MA_10": number,
+                  "MACD": [number, number, number],
+                  "RSI_14": number
+                }
+              }
 
-      Return the data in this strict JSON format:
-      {
-        "symbol": "string (e.g., 'BTC/USD')",
-        "tokenAddress": "string (the Solana token address - IMPORTANT: look carefully for this)",
-        "price": [number, number, number, number] (open, high, low, close),
-        "volume": number (24h volume),
-        "indicators": {
-          "EMA_9": number,
-          "MA_10": number,
-          "MACD": [number, number, number],
-          "RSI_14": number
-        }
-      }
+              If you find multiple potential token addresses, choose the one that appears to be the main token being traded.
+              If you absolutely cannot find a token address after thorough inspection, set it to null.
+              Only return the JSON data, no additional text.
+            `
+          }, {
+            inlineData: {
+              mimeType: "image/jpeg",
+              data: imageData
+            }
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.1,
+          topK: 1,
+          topP: 1,
+        },
+      })
+    });
 
-      If you find multiple potential token addresses, choose the one that appears to be the main token being traded.
-      If you absolutely cannot find a token address after thorough inspection, set it to null.
-      Only return the JSON data, no additional text.
-    `;
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Gemini API error:', error);
+      throw new Error('Failed to analyze image with Gemini API');
+    }
 
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: imageData,
-          mimeType: "image/jpeg"
-        }
-      }
-    ]);
+    const result = await response.json();
+    console.log('Raw Gemini response:', JSON.stringify(result, null, 2));
 
-    const response = await result.response;
-    const text = response.text();
+    // Extract the text content from the response
+    const text = result.candidates[0].content.parts[0].text;
     
     try {
       const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
-      console.log('Raw AI response:', cleanedText);
+      console.log('Cleaned text:', cleanedText);
       const parsedData = JSON.parse(cleanedText);
       
       if (!parsedData.symbol || !Array.isArray(parsedData.price) || !parsedData.indicators) {
