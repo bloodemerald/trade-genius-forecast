@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
@@ -10,6 +10,15 @@ interface ImageUploaderProps {
 
 const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // Set the API key in localStorage when component mounts
+  useEffect(() => {
+    const storedKey = localStorage.getItem('GEMINI_API_KEY');
+    if (!storedKey) {
+      localStorage.setItem('GEMINI_API_KEY', 'AIzaSyBHjClGIarRwpPH06imDJ43eSGU2rTIC6E');
+      toast.success('API key saved to localStorage');
+    }
+  }, []);
 
   const analyzeImage = async (imageData: string) => {
     try {
