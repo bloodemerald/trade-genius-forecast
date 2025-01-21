@@ -6,6 +6,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -18,7 +19,7 @@ serve(async (req) => {
       throw new Error('API key not found');
     }
 
-    console.log('Calling Gemini API with market data:', marketData);
+    console.log('Analyzing market data:', marketData);
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
       method: 'POST',
@@ -29,16 +30,30 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `You are a professional trading assistant. Analyze these market conditions and provide a concise, actionable trading suggestion:
+            text: `Analyze this trading data and provide a concise trading suggestion:
+              Symbol: ${marketData.symbol}
+              Current Price: ${marketData.price[3]}
               Price Change: ${marketData.priceChange}%
-              Volume Change: ${marketData.volumeChange}%
-              RSI: ${marketData.rsi}
-              
-              Provide a clear, concise trading recommendation in 2-3 sentences maximum. Focus on actionable advice based on these technical indicators.`
+              24h Volume: ${marketData.volume}
+              Technical Indicators:
+              - EMA(9): ${marketData.indicators.EMA_9}
+              - MA(10): ${marketData.indicators.MA_10}
+              - MACD: ${marketData.indicators.MACD.join(', ')}
+              - RSI(14): ${marketData.indicators.RSI_14}
+
+              Provide a concise trading suggestion based on ALL these indicators.
+              Focus on:
+              1. Overall trend direction
+              2. Key support/resistance levels
+              3. Volume analysis
+              4. Technical indicator signals
+              5. Risk assessment
+
+              Keep the response under 3 sentences and be specific about the trading action to take.`
           }]
         }],
         generationConfig: {
-          temperature: 0.2,
+          temperature: 0.7,
           topK: 1,
           topP: 1,
         },
@@ -59,7 +74,8 @@ serve(async (req) => {
       throw new Error('Invalid response structure from Gemini API');
     }
 
-    const suggestion = result.candidates[0].content.parts[0].text;
+    const suggestion = result.candidates[0].content.parts[0].text.trim();
+    console.log('Generated suggestion:', suggestion);
 
     return new Response(JSON.stringify({ suggestion }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

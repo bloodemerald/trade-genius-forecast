@@ -98,10 +98,11 @@ const Index = () => {
       const { data: aiData, error } = await supabase.functions.invoke('ai-trading-analysis', {
         body: {
           marketData: {
-            price: data.price[3],
-            priceChange: calculateChange(data.price[3], data.price[0]),
+            symbol: data.symbol,
+            price: data.price,
             volume: data.volume,
-            rsi: data.indicators.RSI_14
+            indicators: data.indicators,
+            priceChange: calculateChange(data.price[3], data.price[0])
           }
         }
       });
