@@ -3,13 +3,15 @@ import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface TradingCardProps {
   title: string;
-  value: number;
+  value: number | null;
   change: number;
   isPrice?: boolean;
 }
 
 export const TradingCard = ({ title, value, change, isPrice = false }: TradingCardProps) => {
-  const formatValue = (val: number) => {
+  const formatValue = (val: number | null) => {
+    if (val === null || val === undefined) return "N/A";
+    
     return isPrice
       ? val.toLocaleString("en-US", {
           minimumFractionDigits: 8,
