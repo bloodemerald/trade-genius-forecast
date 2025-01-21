@@ -16,32 +16,72 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
     const storedKey = localStorage.getItem('GEMINI_API_KEY');
     if (!storedKey) {
       localStorage.setItem('GEMINI_API_KEY', 'AIzaSyBHjClGIarRwpPH06imDJ43eSGU2rTIC6E');
-      toast.success('API key saved to localStorage');
+      toast.success('API key loaded');
     }
   }, []);
 
   const analyzeImage = async (imageData: string) => {
     try {
       setIsAnalyzing(true);
-      const genAI = new GoogleGenerativeAI(localStorage.getItem('GEMINI_API_KEY') || '');
+      toast.info('Starting image analysis...');
+
+      const apiKey = localStorage.getItem('GEMINI_API_KEY');
+      if (!apiKey) {
+        throw new Error('API key not found');
+      }
+
+      const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
 
-      const prompt = "Analyze this trading chart screenshot and extract the following data in JSON format: symbol, price array [open, high, low, close], 24h volume, and technical indicators (EMA_9, MA_10, MACD array, RSI_14). Include only the JSON data in your response.";
+      const prompt = `
+        Analyze this trading chart screenshot and provide the following data in a strict JSON format:
+        {
+          "symbol": "string (e.g., 'BTC/USD')",
+          "price": [number, number, number, number] (open, high, low, close),
+          "volume": number (24h volume),
+          "indicators": {
+            "EMA_9": number,
+            "MA_10": number,
+            "MACD": [number, number, number],
+            "RSI_14": number
+          }
+        }
+        Only return the JSON data, no additional text.
+      `;
 
-      const result = await model.generateContent([prompt, { inlineData: { data: imageData, mimeType: "image/jpeg" } }]);
+      const result = await model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: imageData,
+            mimeType: "image/jpeg"
+          }
+        }
+      ]);
+
       const response = await result.response;
       const text = response.text();
       
       try {
-        const parsedData = JSON.parse(text);
+        // Clean the response text to ensure it only contains valid JSON
+        const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
+        const parsedData = JSON.parse(cleanedText);
+        
+        // Validate the parsed data structure
+        if (!parsedData.symbol || !Array.isArray(parsedData.price) || !parsedData.indicators) {
+          throw new Error('Invalid data structure received from AI');
+        }
+
         onAnalysisComplete(parsedData);
         toast.success('Analysis complete!');
-      } catch (e) {
-        toast.error('Failed to parse AI response');
+      } catch (parseError) {
+        console.error('Parse error:', parseError);
+        console.log('Raw AI response:', text);
+        toast.error('Failed to parse AI response. Please try another image.');
       }
     } catch (error) {
-      toast.error('Failed to analyze image');
-      console.error(error);
+      console.error('Analysis error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to analyze image');
     } finally {
       setIsAnalyzing(false);
     }
@@ -50,11 +90,19 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
+      if (file.size > 4 * 1024 * 1024) {
+        toast.error('Image size must be less than 4MB');
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result) {
           analyzeImage(e.target.result as string);
         }
+      };
+      reader.onerror = () => {
+        toast.error('Failed to read image file');
       };
       reader.readAsDataURL(file);
     }
@@ -63,7 +111,8 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { 'image/*': [] },
-    maxFiles: 1
+    maxFiles: 1,
+    maxSize: 4 * 1024 * 1024
   });
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
@@ -72,11 +121,19 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
       if (items[i].type.indexOf('image') !== -1) {
         const file = items[i].getAsFile();
         if (file) {
+          if (file.size > 4 * 1024 * 1024) {
+            toast.error('Image size must be less than 4MB');
+            return;
+          }
+          
           const reader = new FileReader();
           reader.onload = (e) => {
             if (e.target?.result) {
               analyzeImage(e.target.result as string);
             }
+          };
+          reader.onerror = () => {
+            toast.error('Failed to read pasted image');
           };
           reader.readAsDataURL(file);
         }
