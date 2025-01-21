@@ -30,26 +30,25 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Analyze this trading data and provide a concise trading suggestion:
+            text: `As an expert crypto trading analyst, provide a detailed trading suggestion based on this market data:
               Symbol: ${marketData.symbol}
               Current Price: ${marketData.price[3]}
               Price Change: ${marketData.priceChange}%
               24h Volume: ${marketData.volume}
               Technical Indicators:
-              - EMA(9): ${marketData.indicators.EMA_9}
-              - MA(10): ${marketData.indicators.MA_10}
-              - MACD: ${marketData.indicators.MACD.join(', ')}
               - RSI(14): ${marketData.indicators.RSI_14}
+              - MACD: ${marketData.indicators.MACD.join(', ')}
 
-              Provide a concise trading suggestion based on ALL these indicators.
-              Focus on:
-              1. Overall trend direction
-              2. Key support/resistance levels
-              3. Volume analysis
-              4. Technical indicator signals
-              5. Risk assessment
+              Provide a concise but detailed trading suggestion that includes:
+              1. Clear directional bias (bullish/bearish/neutral)
+              2. Key price levels to watch (support/resistance)
+              3. Specific entry conditions
+              4. Stop loss placement recommendation
+              5. Take profit targets
+              6. Risk management advice
 
-              Keep the response under 3 sentences and be specific about the trading action to take.`
+              Format the response as a clear, actionable trading plan in 3-4 sentences maximum.
+              Be specific about price levels and conditions.`
           }]
         }],
         generationConfig: {
