@@ -18,8 +18,8 @@ export const InteractiveChart = ({ tokenAddress }: InteractiveChartProps) => {
   useEffect(() => {
     if (tokenAddress) {
       // Clean the token address to ensure it's properly formatted
-      const cleanAddress = tokenAddress.trim().toLowerCase();
-      const url = `https://dexscreener.com/ethereum/${cleanAddress}?embed=1&theme=dark`;
+      const cleanAddress = tokenAddress.trim();
+      const url = `https://dexscreener.com/solana/${cleanAddress}?embed=1&theme=dark`;
       console.log('Setting chart URL:', url); // Debug log
       setChartUrl(url);
     } else {

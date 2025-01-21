@@ -36,14 +36,14 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
 
       const prompt = `
         You are a trading chart analysis expert. Look at this trading chart screenshot and extract the following information:
-        1. Most importantly, find the Ethereum token contract address. It might be in the URL, title, or somewhere in the interface.
-           Look for a string that looks like an Ethereum address (0x followed by 40 hexadecimal characters).
+        1. Most importantly, find the Solana token address. It might be in the URL, title, or somewhere in the interface.
+           Look for a string that looks like a Solana address (Base58-encoded string, typically 32-44 characters long).
         2. Also analyze the chart and provide the following data.
 
         Return the data in this strict JSON format:
         {
           "symbol": "string (e.g., 'BTC/USD')",
-          "tokenAddress": "string (the Ethereum contract address - IMPORTANT: look carefully for this)",
+          "tokenAddress": "string (the Solana token address - IMPORTANT: look carefully for this)",
           "price": [number, number, number, number] (open, high, low, close),
           "volume": number (24h volume),
           "indicators": {
