@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { supabase } from "@/integrations/supabase/client";
 
 interface ImageUploaderProps {
   onAnalysisComplete: (data: any) => void;
@@ -11,86 +11,28 @@ interface ImageUploaderProps {
 const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  useEffect(() => {
-    const storedKey = localStorage.getItem('GEMINI_API_KEY');
-    if (!storedKey) {
-      localStorage.setItem('GEMINI_API_KEY', 'AIzaSyBHjClGIarRwpPH06imDJ43eSGU2rTIC6E');
-      toast.success('API key loaded');
-    }
-  }, []);
-
   const analyzeImage = async (imageData: string) => {
     try {
       setIsAnalyzing(true);
       toast.info('Starting image analysis...');
 
-      const apiKey = localStorage.getItem('GEMINI_API_KEY');
-      if (!apiKey) {
-        throw new Error('API key not found');
-      }
-
       const base64Data = imageData.split(',')[1];
       
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const { data, error } = await supabase.functions.invoke('analyze-trading', {
+        body: { imageData: base64Data }
+      });
 
-      const prompt = `
-        You are a trading chart analysis expert. Look at this trading chart screenshot and extract the following information:
-        1. Most importantly, find the Solana token address. It might be in the URL, title, or somewhere in the interface.
-           Look for a string that looks like a Solana address (Base58-encoded string, typically 32-44 characters long).
-        2. Also analyze the chart and provide the following data.
-
-        Return the data in this strict JSON format:
-        {
-          "symbol": "string (e.g., 'BTC/USD')",
-          "tokenAddress": "string (the Solana token address - IMPORTANT: look carefully for this)",
-          "price": [number, number, number, number] (open, high, low, close),
-          "volume": number (24h volume),
-          "indicators": {
-            "EMA_9": number,
-            "MA_10": number,
-            "MACD": [number, number, number],
-            "RSI_14": number
-          }
-        }
-
-        If you find multiple potential token addresses, choose the one that appears to be the main token being traded.
-        If you absolutely cannot find a token address after thorough inspection, set it to null.
-        Only return the JSON data, no additional text.
-      `;
-
-      const result = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            data: base64Data,
-            mimeType: "image/jpeg"
-          }
-        }
-      ]);
-
-      const response = await result.response;
-      const text = response.text();
-      
-      try {
-        const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
-        console.log('Raw AI response:', cleanedText); // Debug log
-        const parsedData = JSON.parse(cleanedText);
-        
-        if (!parsedData.symbol || !Array.isArray(parsedData.price) || !parsedData.indicators) {
-          throw new Error('Invalid data structure received from AI');
-        }
-
-        console.log('Parsed data:', parsedData); // Debug log
-        console.log('Token address:', parsedData.tokenAddress); // Debug log
-
-        onAnalysisComplete(parsedData);
-        toast.success('Analysis complete!');
-      } catch (parseError) {
-        console.error('Parse error:', parseError);
-        console.log('Raw AI response:', text);
-        toast.error('Failed to parse AI response. Please try another image.');
+      if (error) {
+        throw error;
       }
+
+      if (!data.symbol || !Array.isArray(data.price) || !data.indicators) {
+        throw new Error('Invalid data structure received from AI');
+      }
+
+      console.log('Analysis result:', data);
+      onAnalysisComplete(data);
+      toast.success('Analysis complete!');
     } catch (error) {
       console.error('Analysis error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to analyze image');
