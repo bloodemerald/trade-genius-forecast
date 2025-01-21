@@ -22,6 +22,12 @@ interface TradingData {
   };
 }
 
+interface AIResponse {
+  suggestion: string;
+  sentiment: number;
+  confidence: number;
+}
+
 const Index = () => {
   const [data, setData] = useState<TradingData>({
     symbol: "BARRON/SOL",
@@ -36,8 +42,11 @@ const Index = () => {
     },
   });
   const [loading, setLoading] = useState(false);
-  const [suggestion, setSuggestion] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [aiResponse, setAIResponse] = useState<AIResponse>({
+    suggestion: '',
+    sentiment: 50,
+    confidence: 0
+  });
 
   const calculateSentiment = (rsi: number): number => {
     if (rsi >= 70) return 100; // Strongly Bullish
@@ -126,6 +135,7 @@ const Index = () => {
       });
 
       if (error) throw error;
+      setAIResponse(aiData);
       setSuggestion(aiData.suggestion);
     } catch (error) {
       console.error('Error getting AI suggestion:', error);
@@ -208,14 +218,14 @@ const Index = () => {
                 )}
               </button>
 
-              {suggestion && (
+              {aiResponse.suggestion && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2 }}
                   className="p-4 rounded-lg bg-[#1A1F2C]/50 border border-[#9b87f5]/20 relative z-10"
                 >
-                  <p className="text-sm text-[#D6BCFA] leading-relaxed">{suggestion}</p>
+                  <p className="text-sm text-[#D6BCFA] leading-relaxed">{aiResponse.suggestion}</p>
                 </motion.div>
               )}
             </div>
@@ -242,7 +252,7 @@ const Index = () => {
             />
             <TradingCard
               title="Market Sentiment"
-              value={calculateSentiment(data.indicators.RSI_14)}
+              value={aiResponse.sentiment}
               change={0}
             />
           </div>
@@ -258,7 +268,12 @@ const Index = () => {
             </motion.h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {scenarios.map((scenario, index) => (
-                <TradeScenario key={index} {...scenario} index={index} />
+                <TradeScenario 
+                  key={index} 
+                  {...scenario} 
+                  index={index}
+                  confidence={aiResponse.confidence} 
+                />
               ))}
             </div>
           </div>

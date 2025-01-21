@@ -30,7 +30,7 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `You are an expert cryptocurrency trading analyst. Based on this market data, provide a detailed and actionable trading suggestion:
+            text: `You are an expert cryptocurrency trading analyst. Based on this market data, provide a detailed analysis:
 
               Symbol: ${marketData.symbol}
               Current Price: ${marketData.price[3]}
@@ -40,20 +40,35 @@ serve(async (req) => {
               - RSI(14): ${marketData.indicators.RSI_14}
               - MACD: ${marketData.indicators.MACD.join(', ')}
 
-              Analyze this data and provide a professional trading plan that includes:
-              1. Market Bias: Clear directional bias (strongly bullish, moderately bullish, neutral, moderately bearish, or strongly bearish)
-              2. Key Levels: Identify critical support and resistance levels based on the chart
-              3. Entry Strategy: Specific price levels or conditions for entry
-              4. Risk Management: 
-                - Precise stop loss placement with reasoning
-                - Multiple take profit targets (TP1, TP2, TP3)
-                - Position sizing recommendation
-              5. Risk/Reward Analysis: Calculate and explain the risk/reward ratio
+              Analyze this data and provide:
+              1. Market Sentiment Score (0-100):
+                - 0-20: Strongly Bearish
+                - 21-40: Moderately Bearish
+                - 41-45: Slightly Bearish
+                - 46-55: Neutral
+                - 56-60: Slightly Bullish
+                - 61-80: Moderately Bullish
+                - 81-100: Strongly Bullish
 
-              Format your response as a clear, professional trading plan in 4-5 concise but detailed sentences.
-              Use specific price levels and percentages.
-              Include clear actionable steps.
-              End with a risk warning if relevant market conditions suggest caution.`
+              2. Confidence Score (0-100):
+                Based on:
+                - Technical indicator alignment
+                - Volume confirmation
+                - Price action strength
+                - Overall market conditions
+
+              3. Trading Plan:
+                - Entry Strategy
+                - Risk Management (Stop Loss)
+                - Take Profit Targets
+                - Position Sizing
+
+              Return ONLY this JSON:
+              {
+                "suggestion": "string (4-5 sentences of analysis)",
+                "sentiment": number (0-100),
+                "confidence": number (0-100)
+              }`
           }]
         }],
         generationConfig: {
@@ -78,10 +93,10 @@ serve(async (req) => {
       throw new Error('Invalid response structure from Gemini API');
     }
 
-    const suggestion = result.candidates[0].content.parts[0].text.trim();
-    console.log('Generated suggestion:', suggestion);
+    const aiResponse = JSON.parse(result.candidates[0].content.parts[0].text.trim());
+    console.log('Parsed AI response:', aiResponse);
 
-    return new Response(JSON.stringify({ suggestion }), {
+    return new Response(JSON.stringify(aiResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

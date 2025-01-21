@@ -13,7 +13,7 @@ interface TradeScenarioProps {
   index: number;
 }
 
-const getScenarioExplanation = (riskReward: number, potential: number, confidence: number, rsi: number = 46.49) => {
+const getScenarioExplanation = (riskReward: number, potential: number, confidence: number) => {
   let explanation = "";
   
   if (confidence >= 80) {
@@ -24,10 +24,12 @@ const getScenarioExplanation = (riskReward: number, potential: number, confidenc
     explanation = "Low confidence setup. Consider waiting for better opportunities or skip this trade.";
   }
   
-  if (rsi > 70) {
-    explanation += " Market appears overbought based on RSI indicator.";
-  } else if (rsi < 30) {
-    explanation += " Market appears oversold based on RSI indicator.";
+  if (riskReward >= 3) {
+    explanation += " Favorable risk-to-reward ratio suggests good potential for profits.";
+  } else if (riskReward >= 2) {
+    explanation += " Acceptable risk-to-reward ratio, manage position size accordingly.";
+  } else {
+    explanation += " Lower risk-to-reward ratio, consider waiting for better setups.";
   }
   
   return explanation;
