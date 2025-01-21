@@ -6,7 +6,7 @@ import ImageUploader from "@/components/ImageUploader";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ThemeProvider } from "next-themes";
 import { Brain, Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast, toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TradingData {
@@ -136,7 +136,6 @@ const Index = () => {
 
       if (error) throw error;
       setAIResponse(aiData);
-      setSuggestion(aiData.suggestion);
     } catch (error) {
       console.error('Error getting AI suggestion:', error);
       toast({
