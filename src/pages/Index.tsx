@@ -8,6 +8,7 @@ import { ThemeProvider } from "next-themes";
 import { Brain, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { TradingTutor } from "@/components/TradingTutor";
 
 interface TradingData {
   symbol: string;
@@ -129,6 +130,7 @@ const Index = () => {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-7xl mx-auto space-y-8"
         >
+          {/* Header section */}
           <div className="flex items-center justify-between">
             <div>
               <motion.h1 
@@ -159,6 +161,7 @@ const Index = () => {
             </div>
           </div>
 
+          {/* Image Analysis section */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -201,6 +204,7 @@ const Index = () => {
             </div>
           </motion.div>
 
+          {/* Trading Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <TradingCard
               title="Current Price"
@@ -220,27 +224,29 @@ const Index = () => {
               change={0}
             />
             <TradingCard
-              title="MACD"
-              value={data.indicators.MACD[2]}
-              change={calculateChange(data.indicators.MACD[2], data.indicators.MACD[1])}
+              title="EMA (9)"
+              value={data.indicators.EMA_9}
+              change={calculateChange(data.indicators.EMA_9, data.price[3])}
               showPercentage
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <motion.h2 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-xl font-semibold mb-6 text-[#9b87f5]"
-              >
-                Trading Scenarios
-              </motion.h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {scenarios.map((scenario, index) => (
-                  <TradeScenario key={index} {...scenario} index={index} />
-                ))}
-              </div>
+          {/* Trading Tutor */}
+          <TradingTutor />
+
+          {/* Trading Scenarios */}
+          <div>
+            <motion.h2 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-xl font-semibold mb-6 text-[#9b87f5]"
+            >
+              Trading Scenarios
+            </motion.h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {scenarios.map((scenario, index) => (
+                <TradeScenario key={index} {...scenario} index={index} />
+              ))}
             </div>
           </div>
         </motion.div>
