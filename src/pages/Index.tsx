@@ -31,12 +31,20 @@ const Index = () => {
 
   const calculateScenarios = (currentPrice: number) => {
     const volatility = Math.abs(data.price[1] - data.price[2]) / data.price[3] * 100; // Using high-low range
+    const averageVolume = data.volume;
+    const isOverbought = data.indicators.RSI_14 > 70;
+    const isOversold = data.indicators.RSI_14 < 30;
+    const trendStrength = Math.abs(data.indicators.MACD[2]);
+    
+    // Calculate dynamic multipliers based on market conditions
+    const riskMultiplier = isOversold ? 0.8 : isOverbought ? 1.2 : 1;
+    const rewardMultiplier = trendStrength > 0.005 ? 1.5 : 1;
     
     return [
       {
         entry: currentPrice,
-        stopLoss: currentPrice * (1 - volatility * 0.5 / 100),
-        takeProfit: currentPrice * (1 + volatility * 1.25 / 100),
+        stopLoss: currentPrice * (1 - volatility * 0.5 * riskMultiplier / 100),
+        takeProfit: currentPrice * (1 + volatility * 1.25 * rewardMultiplier / 100),
         get riskReward() {
           return (this.takeProfit - this.entry) / (this.entry - this.stopLoss);
         },
@@ -46,8 +54,8 @@ const Index = () => {
       },
       {
         entry: currentPrice,
-        stopLoss: currentPrice * (1 - volatility * 0.75 / 100),
-        takeProfit: currentPrice * (1 + volatility * 2.25 / 100),
+        stopLoss: currentPrice * (1 - volatility * 0.75 * riskMultiplier / 100),
+        takeProfit: currentPrice * (1 + volatility * 2.25 * rewardMultiplier / 100),
         get riskReward() {
           return (this.takeProfit - this.entry) / (this.entry - this.stopLoss);
         },
@@ -57,8 +65,8 @@ const Index = () => {
       },
       {
         entry: currentPrice,
-        stopLoss: currentPrice * (1 - volatility / 100),
-        takeProfit: currentPrice * (1 + volatility * 3.375 / 100),
+        stopLoss: currentPrice * (1 - volatility * riskMultiplier / 100),
+        takeProfit: currentPrice * (1 + volatility * 3.375 * rewardMultiplier / 100),
         get riskReward() {
           return (this.takeProfit - this.entry) / (this.entry - this.stopLoss);
         },
