@@ -6,11 +6,26 @@ interface TradingCardProps {
   value: number | null;
   change: number;
   isPrice?: boolean;
+  showPercentage?: boolean;
 }
 
-export const TradingCard = ({ title, value, change, isPrice = false }: TradingCardProps) => {
+export const TradingCard = ({ 
+  title, 
+  value, 
+  change, 
+  isPrice = false,
+  showPercentage = false 
+}: TradingCardProps) => {
   const formatValue = (val: number | null) => {
     if (val === null || val === undefined) return "N/A";
+    
+    if (title === "RSI (14)") {
+      return val.toFixed(2);
+    }
+    
+    if (title === "24h Volume") {
+      return val.toLocaleString("en-US", { maximumFractionDigits: 0 });
+    }
     
     return isPrice
       ? val.toLocaleString("en-US", {
@@ -21,6 +36,21 @@ export const TradingCard = ({ title, value, change, isPrice = false }: TradingCa
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
+  };
+
+  const getChangeDisplay = () => {
+    if (!showPercentage) return null;
+    
+    return (
+      <div
+        className={`flex items-center ${
+          change >= 0 ? "text-profit" : "text-loss"
+        } text-sm font-medium ml-auto flex-shrink-0`}
+      >
+        {change >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+        <span className="min-w-[3rem] text-right">{Math.abs(change).toFixed(2)}%</span>
+      </div>
+    );
   };
 
   return (
@@ -40,14 +70,7 @@ export const TradingCard = ({ title, value, change, isPrice = false }: TradingCa
             {formatValue(value)}
           </span>
         </div>
-        <div
-          className={`flex items-center ${
-            change >= 0 ? "text-profit" : "text-loss"
-          } text-sm font-medium ml-auto flex-shrink-0`}
-        >
-          {change >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-          <span className="min-w-[3rem] text-right">{Math.abs(change).toFixed(2)}%</span>
-        </div>
+        {getChangeDisplay()}
       </div>
       
       {/* Decorative elements inspired by Final Fantasy UI */}
