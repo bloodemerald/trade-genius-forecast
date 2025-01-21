@@ -219,14 +219,16 @@ const Index = () => {
               change={0}
             />
             <TradingCard
-              title="RSI (14)"
-              value={data.indicators.RSI_14}
-              change={0}
+              title="MACD Signal"
+              value={data.indicators.MACD[1]}
+              change={calculateChange(data.indicators.MACD[1], data.indicators.MACD[0])}
+              showPercentage
             />
             <TradingCard
-              title="EMA (9)"
-              value={data.indicators.EMA_9}
-              change={calculateChange(data.indicators.EMA_9, data.price[3])}
+              title="Price Change"
+              value={data.price[3]}
+              change={calculateChange(data.price[3], data.price[0])}
+              isPrice
               showPercentage
             />
           </div>
