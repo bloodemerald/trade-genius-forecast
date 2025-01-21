@@ -19,8 +19,9 @@ serve(async (req) => {
       throw new Error('API key not found');
     }
 
-    // Using fetch directly since we can't import the Google AI SDK in Deno
-    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-1.0-pro-vision-latest:generateContent', {
+    console.log('Calling Gemini API...');
+
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,33 +30,26 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `
-              You are a trading chart analysis expert. Look at this trading chart screenshot and extract the following information:
-              1. Most importantly, find the Solana token address. It might be in the URL, title, or somewhere in the interface.
-                 Look for a string that looks like a Solana address (Base58-encoded string, typically 32-44 characters long).
-              2. Also analyze the chart and provide the following data.
+            text: `Analyze this trading chart screenshot and extract:
+              1. Find any Solana token address (Base58 string, 32-44 chars)
+              2. Analyze the chart data
 
-              Return the data in this strict JSON format:
+              Return ONLY this JSON:
               {
                 "symbol": "string (e.g., 'BTC/USD')",
-                "tokenAddress": "string (the Solana token address - IMPORTANT: look carefully for this)",
-                "price": [number, number, number, number] (open, high, low, close),
-                "volume": number (24h volume),
+                "tokenAddress": "string or null",
+                "price": [number, number, number, number],
+                "volume": number,
                 "indicators": {
                   "EMA_9": number,
                   "MA_10": number,
                   "MACD": [number, number, number],
                   "RSI_14": number
                 }
-              }
-
-              If you find multiple potential token addresses, choose the one that appears to be the main token being traded.
-              If you absolutely cannot find a token address after thorough inspection, set it to null.
-              Only return the JSON data, no additional text.
-            `
+              }`
           }, {
-            inlineData: {
-              mimeType: "image/jpeg",
+            inline_data: {
+              mime_type: "image/jpeg",
               data: imageData
             }
           }]
@@ -69,16 +63,21 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('Gemini API error:', error);
-      throw new Error('Failed to analyze image with Gemini API');
+      const errorText = await response.text();
+      console.error('Gemini API error response:', errorText);
+      throw new Error(`Gemini API returned ${response.status}: ${errorText}`);
     }
 
     const result = await response.json();
-    console.log('Raw Gemini response:', JSON.stringify(result, null, 2));
+    console.log('Gemini API response:', JSON.stringify(result, null, 2));
 
-    // Extract the text content from the response
+    if (!result.candidates?.[0]?.content?.parts?.[0]?.text) {
+      console.error('Unexpected Gemini API response structure:', result);
+      throw new Error('Invalid response structure from Gemini API');
+    }
+
     const text = result.candidates[0].content.parts[0].text;
+    console.log('Raw text from Gemini:', text);
     
     try {
       const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
@@ -86,6 +85,7 @@ serve(async (req) => {
       const parsedData = JSON.parse(cleanedText);
       
       if (!parsedData.symbol || !Array.isArray(parsedData.price) || !parsedData.indicators) {
+        console.error('Invalid data structure:', parsedData);
         throw new Error('Invalid data structure received from AI');
       }
 
