@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { TradingCard } from "@/components/TradingCard";
 import { TradeScenario } from "@/components/TradeScenario";
 import { motion } from "framer-motion";
+import ImageUploader from "@/components/ImageUploader";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface TradingData {
   symbol: string;
@@ -27,6 +30,17 @@ const Index = () => {
       RSI_14: 46.49,
     },
   });
+
+  const [apiKey, setApiKey] = useState(localStorage.getItem('GEMINI_API_KEY') || '');
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newKey = e.target.value;
+    setApiKey(newKey);
+    localStorage.setItem('GEMINI_API_KEY', newKey);
+    if (newKey) {
+      toast.success('API key saved');
+    }
+  };
 
   const scenarios = [
     {
@@ -70,6 +84,25 @@ const Index = () => {
           </div>
           <div className="text-sm text-gray-400">
             Last updated: {new Date().toLocaleTimeString()}
+          </div>
+        </div>
+
+        <div className="mb-8 p-4 bg-gray-800/50 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4">Image Analysis</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Google Gemini API Key
+              </label>
+              <Input
+                type="password"
+                value={apiKey}
+                onChange={handleApiKeyChange}
+                placeholder="Enter your Gemini API key"
+                className="bg-gray-700 border-gray-600 text-white"
+              />
+            </div>
+            <ImageUploader onAnalysisComplete={setData} />
           </div>
         </div>
 
