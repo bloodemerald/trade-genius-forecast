@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, Brain, TrendingUp } from "lucide-react";
+import { Loader2, Brain, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { supabase } from "@/integrations/supabase/client";
+import { motion } from "framer-motion";
 
 interface MarketCondition {
   price: number;
@@ -50,49 +51,91 @@ export const AITradingAssistant = ({ marketCondition }: { marketCondition: Marke
   };
 
   return (
-    <Card className="p-6 backdrop-blur-md bg-[#1A1F2C]/90 border border-[#9b87f5]/20">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Brain className="text-[#9b87f5]" size={24} />
-          <h2 className="text-xl font-semibold text-[#D6BCFA]">AI Trading Assistant</h2>
-        </div>
-        <HoverCard>
-          <HoverCardTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <TrendingUp className="h-4 w-4" />
-            </Button>
-          </HoverCardTrigger>
-          <HoverCardContent className="w-80">
-            <p className="text-sm">
-              The AI assistant analyzes current market conditions including price, volume, RSI, and MACD 
-              to provide trading suggestions. These are recommendations only - always do your own research.
-            </p>
-          </HoverCardContent>
-        </HoverCard>
-      </div>
-
-      <div className="space-y-4">
-        <Button 
-          onClick={analyzeMarket} 
-          disabled={loading}
-          className="w-full bg-[#9b87f5] hover:bg-[#8b77e5] text-white"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            'Get Trading Suggestion'
-          )}
-        </Button>
-
-        {suggestion && (
-          <div className="mt-4 p-4 rounded-lg bg-background/50 border border-[#9b87f5]/20">
-            <p className="text-sm text-[#D6BCFA]">{suggestion}</p>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="w-full"
+    >
+      <Card className="backdrop-blur-md bg-[#1A1F2C]/90 border border-[#9b87f5]/20 overflow-hidden">
+        <div className="p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-[#9b87f5]/10">
+                <Brain className="text-[#9b87f5] h-5 w-5" />
+              </div>
+              <h2 className="text-lg font-semibold text-[#D6BCFA]">AI Trading Assistant</h2>
+            </div>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <Button variant="ghost" size="icon" className="hover:bg-[#9b87f5]/10">
+                  <TrendingUp className="h-4 w-4 text-[#9b87f5]" />
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-80 bg-[#1A1F2C] border border-[#9b87f5]/30 text-white">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-[#D6BCFA]">Market Analysis</h4>
+                  <p className="text-sm text-[#D6BCFA]/70">
+                    The AI assistant analyzes current market conditions including price, volume, RSI, and MACD 
+                    to provide trading suggestions. These are recommendations only - always do your own research.
+                  </p>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
           </div>
-        )}
-      </div>
-    </Card>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="p-3 rounded-lg bg-[#1A1F2C]/50 border border-[#9b87f5]/10">
+              <div className="text-sm text-[#D6BCFA]/70 mb-1">RSI (14)</div>
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-semibold text-white">{marketCondition.rsi.toFixed(2)}</span>
+                {marketCondition.rsi > 70 ? (
+                  <ArrowUpRight className="text-profit h-4 w-4" />
+                ) : marketCondition.rsi < 30 ? (
+                  <ArrowDownRight className="text-loss h-4 w-4" />
+                ) : null}
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-[#1A1F2C]/50 border border-[#9b87f5]/10">
+              <div className="text-sm text-[#D6BCFA]/70 mb-1">MACD</div>
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-semibold text-white">{marketCondition.macd[0].toFixed(2)}</span>
+                {marketCondition.macd[0] > 0 ? (
+                  <ArrowUpRight className="text-profit h-4 w-4" />
+                ) : (
+                  <ArrowDownRight className="text-loss h-4 w-4" />
+                )}
+              </div>
+            </div>
+          </div>
+
+          <Button 
+            onClick={analyzeMarket} 
+            disabled={loading}
+            className="w-full bg-[#9b87f5] hover:bg-[#8b77e5] text-white border-none"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Analyzing Market...
+              </>
+            ) : (
+              'Get Trading Suggestion'
+            )}
+          </Button>
+
+          {suggestion && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mt-4 p-4 rounded-lg bg-[#1A1F2C]/50 border border-[#9b87f5]/20"
+            >
+              <p className="text-sm text-[#D6BCFA] leading-relaxed">{suggestion}</p>
+            </motion.div>
+          )}
+        </div>
+      </Card>
+    </motion.div>
   );
 };
