@@ -20,31 +20,18 @@ export const AITradingAssistant = ({ marketCondition }: { marketCondition: Marke
   const analyzeMarket = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      const response = await fetch('https://wadzjfyhpalchlhidlyk.supabase.co/functions/v1/ai-trading-analysis', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('PERPLEXITY_API_KEY')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.1-sonar-small-128k-online',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a professional trading assistant. Analyze the market conditions and provide concise, actionable trading suggestions.'
-            },
-            {
-              role: 'user',
-              content: `Analyze these market conditions and provide trading suggestions:
-                Price: ${marketCondition.price}
-                Volume: ${marketCondition.volume}
-                RSI: ${marketCondition.rsi}
-                MACD: ${marketCondition.macd.join(', ')}
-              `
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 500
+          marketData: {
+            price: marketCondition.price,
+            volume: marketCondition.volume,
+            rsi: marketCondition.rsi,
+            macd: marketCondition.macd.join(', ')
+          }
         }),
       });
 
@@ -53,7 +40,7 @@ export const AITradingAssistant = ({ marketCondition }: { marketCondition: Marke
       }
 
       const data = await response.json();
-      setSuggestion(data.choices[0].message.content);
+      setSuggestion(data.suggestion);
     } catch (error) {
       console.error('Error getting AI suggestion:', error);
       toast({
@@ -89,20 +76,9 @@ export const AITradingAssistant = ({ marketCondition }: { marketCondition: Marke
       </div>
 
       <div className="space-y-4">
-        {!localStorage.getItem('PERPLEXITY_API_KEY') && (
-          <div className="mb-4">
-            <input
-              type="password"
-              placeholder="Enter your Perplexity API key"
-              className="w-full p-2 rounded bg-background border border-[#9b87f5]/30 text-foreground"
-              onChange={(e) => localStorage.setItem('PERPLEXITY_API_KEY', e.target.value)}
-            />
-          </div>
-        )}
-
         <Button 
           onClick={analyzeMarket} 
-          disabled={loading || !localStorage.getItem('PERPLEXITY_API_KEY')}
+          disabled={loading}
           className="w-full bg-[#9b87f5] hover:bg-[#8b77e5] text-white"
         >
           {loading ? (
