@@ -33,7 +33,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
       const base64Data = imageData.split(',')[1];
       
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const prompt = `
         Analyze this trading chart screenshot and provide the following data in a strict JSON format:
