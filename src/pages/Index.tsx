@@ -8,7 +8,14 @@ import { ThemeProvider } from "next-themes";
 import { Brain, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { TradingTutor } from "@/components/TradingTutor";
+</lov-replace>
+
+<lov-search>
+          {/* Trading Tutor */}
+          <TradingTutor />
+
+</lov-search>
+<lov-replace>
 
 interface TradingData {
   symbol: string;
