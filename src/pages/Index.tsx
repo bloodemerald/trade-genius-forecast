@@ -29,29 +29,47 @@ const Index = () => {
     },
   });
 
-  const scenarios = [
-    {
-      entry: 0.05297,
-      stopLoss: 0.05265,
-      takeProfit: 0.05516,
-      riskReward: 2.5,
-      potential: 4.13,
-    },
-    {
-      entry: 0.05300,
-      stopLoss: 0.05250,
-      takeProfit: 0.05600,
-      riskReward: 3.0,
-      potential: 5.66,
-    },
-    {
-      entry: 0.05280,
-      stopLoss: 0.05240,
-      takeProfit: 0.05550,
-      riskReward: 3.375,
-      potential: 5.11,
-    },
-  ];
+  const calculateScenarios = (currentPrice: number) => {
+    const volatility = Math.abs(data.price[1] - data.price[2]) / data.price[3] * 100; // Using high-low range
+    
+    return [
+      {
+        entry: currentPrice,
+        stopLoss: currentPrice * (1 - volatility * 0.5 / 100),
+        takeProfit: currentPrice * (1 + volatility * 1.25 / 100),
+        get riskReward() {
+          return (this.takeProfit - this.entry) / (this.entry - this.stopLoss);
+        },
+        get potential() {
+          return ((this.takeProfit - this.entry) / this.entry) * 100;
+        }
+      },
+      {
+        entry: currentPrice,
+        stopLoss: currentPrice * (1 - volatility * 0.75 / 100),
+        takeProfit: currentPrice * (1 + volatility * 2.25 / 100),
+        get riskReward() {
+          return (this.takeProfit - this.entry) / (this.entry - this.stopLoss);
+        },
+        get potential() {
+          return ((this.takeProfit - this.entry) / this.entry) * 100;
+        }
+      },
+      {
+        entry: currentPrice,
+        stopLoss: currentPrice * (1 - volatility / 100),
+        takeProfit: currentPrice * (1 + volatility * 3.375 / 100),
+        get riskReward() {
+          return (this.takeProfit - this.entry) / (this.entry - this.stopLoss);
+        },
+        get potential() {
+          return ((this.takeProfit - this.entry) / this.entry) * 100;
+        }
+      }
+    ];
+  };
+
+  const scenarios = calculateScenarios(data.price[3]);
 
   const calculateChange = (current: number, previous: number) => {
     return ((current - previous) / previous) * 100;
