@@ -11,7 +11,6 @@ interface ImageUploaderProps {
 const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // Set the API key in localStorage when component mounts
   useEffect(() => {
     const storedKey = localStorage.getItem('GEMINI_API_KEY');
     if (!storedKey) {
@@ -30,6 +29,9 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
         throw new Error('API key not found');
       }
 
+      // Remove the data URL prefix to get just the base64 data
+      const base64Data = imageData.split(',')[1];
+      
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
 
@@ -53,7 +55,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
         prompt,
         {
           inlineData: {
-            data: imageData,
+            data: base64Data,
             mimeType: "image/jpeg"
           }
         }
