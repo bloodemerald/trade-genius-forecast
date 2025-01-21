@@ -5,7 +5,9 @@ import { motion } from "framer-motion";
 import ImageUploader from "@/components/ImageUploader";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ThemeProvider } from "next-themes";
-import { AITradingAssistant } from "@/components/AITradingAssistant";
+import { Brain, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TradingData {
   symbol: string;
@@ -33,6 +35,9 @@ const Index = () => {
       RSI_14: 46.49,
     },
   });
+  const [loading, setLoading] = useState(false);
+  const [suggestion, setSuggestion] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const calculateScenarios = (currentPrice: number) => {
     const volatility = Math.abs(data.price[1] - data.price[2]) / data.price[3] * 100;
@@ -87,6 +92,34 @@ const Index = () => {
     return ((current - previous) / previous) * 100;
   };
 
+  const getAISuggestion = async () => {
+    setLoading(true);
+    try {
+      const { data: aiData, error } = await supabase.functions.invoke('ai-trading-analysis', {
+        body: {
+          marketData: {
+            price: data.price[3],
+            priceChange: calculateChange(data.price[3], data.price[0]),
+            volume: data.volume,
+            rsi: data.indicators.RSI_14
+          }
+        }
+      });
+
+      if (error) throw error;
+      setSuggestion(aiData.suggestion);
+    } catch (error) {
+      console.error('Error getting AI suggestion:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get AI trading suggestion. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <ThemeProvider attribute="class" defaultTheme="dark">
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background text-foreground p-8 transition-colors duration-300">
@@ -133,8 +166,37 @@ const Index = () => {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-[#9b87f5]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <h2 className="text-xl font-semibold mb-4 text-[#9b87f5] relative z-10">Image Analysis</h2>
-            <div className="relative z-10">
+            <div className="relative z-10 space-y-4">
               <ImageUploader onAnalysisComplete={setData} />
+              
+              <button
+                onClick={getAISuggestion}
+                disabled={loading}
+                className="w-full relative z-10 py-3 px-4 bg-gradient-to-r from-[#9b87f5] to-[#8b77e5] hover:from-[#8b77e5] hover:to-[#7a66d4] text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Analyzing Trading Data...</span>
+                  </>
+                ) : (
+                  <>
+                    <Brain className="h-5 w-5 transition-transform group-hover:scale-110" />
+                    <span>Get AI Trading Suggestion</span>
+                  </>
+                )}
+              </button>
+
+              {suggestion && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="p-4 rounded-lg bg-[#1A1F2C]/50 border border-[#9b87f5]/20 relative z-10"
+                >
+                  <p className="text-sm text-[#D6BCFA] leading-relaxed">{suggestion}</p>
+                </motion.div>
+              )}
             </div>
           </motion.div>
 
@@ -178,16 +240,6 @@ const Index = () => {
                   <TradeScenario key={index} {...scenario} index={index} />
                 ))}
               </div>
-            </div>
-            <div>
-              <AITradingAssistant
-                marketCondition={{
-                  price: data.price[3],
-                  volume: data.volume,
-                  rsi: data.indicators.RSI_14,
-                  macd: data.indicators.MACD,
-                }}
-              />
             </div>
           </div>
         </motion.div>
