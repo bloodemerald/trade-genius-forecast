@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { TradingCard } from "@/components/TradingCard";
 import { TradeScenario } from "@/components/TradeScenario";
+import { InteractiveChart } from "@/components/InteractiveChart";
 import { motion } from "framer-motion";
 import ImageUploader from "@/components/ImageUploader";
 
@@ -136,31 +137,36 @@ const Index = () => {
           <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-[#9b87f5]/30" />
         </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <TradingCard
-          title="Current Price"
-          value={data.price[3]}
-          change={calculateChange(data.price[3], data.price[0])}
-          isPrice
-          showPercentage
+        <InteractiveChart 
+          price={data.price}
+          indicators={data.indicators}
         />
-        <TradingCard
-          title="24h Volume"
-          value={data.volume}
-          change={0}
-        />
-        <TradingCard
-          title="RSI (14)"
-          value={data.indicators.RSI_14}
-          change={0}
-        />
-        <TradingCard
-          title="MACD"
-          value={data.indicators.MACD[2]}
-          change={calculateChange(data.indicators.MACD[2], data.indicators.MACD[1])}
-          showPercentage
-        />
-      </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <TradingCard
+            title="Current Price"
+            value={data.price[3]}
+            change={calculateChange(data.price[3], data.price[0])}
+            isPrice
+            showPercentage
+          />
+          <TradingCard
+            title="24h Volume"
+            value={data.volume}
+            change={0}
+          />
+          <TradingCard
+            title="RSI (14)"
+            value={data.indicators.RSI_14}
+            change={0}
+          />
+          <TradingCard
+            title="MACD"
+            value={data.indicators.MACD[2]}
+            change={calculateChange(data.indicators.MACD[2], data.indicators.MACD[1])}
+            showPercentage
+          />
+        </div>
 
         <div>
           <motion.h2 
