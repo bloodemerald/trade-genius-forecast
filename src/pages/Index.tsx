@@ -8,14 +8,6 @@ import { ThemeProvider } from "next-themes";
 import { Brain, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-</lov-replace>
-
-<lov-search>
-          {/* Trading Tutor */}
-          <TradingTutor />
-
-</lov-search>
-<lov-replace>
 
 interface TradingData {
   symbol: string;
@@ -236,9 +228,6 @@ const Index = () => {
               change={0}
             />
           </div>
-
-          {/* Trading Tutor */}
-          <TradingTutor />
 
           {/* Trading Scenarios */}
           <div>
