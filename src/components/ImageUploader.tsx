@@ -66,11 +66,15 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
       
       try {
         const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
+        console.log('Raw AI response:', cleanedText); // Debug log
         const parsedData = JSON.parse(cleanedText);
         
         if (!parsedData.symbol || !Array.isArray(parsedData.price) || !parsedData.indicators) {
           throw new Error('Invalid data structure received from AI');
         }
+
+        console.log('Parsed data:', parsedData); // Debug log
+        console.log('Token address:', parsedData.tokenAddress); // Debug log
 
         onAnalysisComplete(parsedData);
         toast.success('Analysis complete!');
