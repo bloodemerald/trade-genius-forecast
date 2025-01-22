@@ -28,6 +28,9 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
           const pair = data.pairs[0]; // Get the first matching pair
           setPairAddress(pair.pairAddress);
           
+          // Construct the symbol string using baseToken and quoteToken
+          const tradingViewSymbol = `${pair.baseToken.symbol}${pair.quoteToken.symbol}`;
+          
           // Load TradingView widget with the correct pair
           const script = document.createElement('script');
           script.src = 'https://s3.tradingview.com/tv.js';
@@ -37,7 +40,7 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
               new window.TradingView.widget({
                 width: '100%',
                 height: 500,
-                symbol: `${pair.dexId}:${pair.pairAddress}`,
+                symbol: tradingViewSymbol,
                 interval: 'D',
                 timezone: 'Etc/UTC',
                 theme: 'dark',
