@@ -9,6 +9,9 @@ export interface TradingData {
     MACD: number[];
     RSI_14: number;
   };
+  chartObservations?: string[];
+  tradeSignals?: string[];
+  priceAction?: string[];
 }
 
 export interface AIResponse {

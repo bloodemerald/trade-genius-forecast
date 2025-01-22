@@ -6,6 +6,11 @@ interface TradingCardsGridProps {
   volume: number;
   rsi: number;
   sentiment: number;
+  aiAnalysis?: {
+    chartObservations?: string[];
+    tradeSignals?: string[];
+    priceAction?: string[];
+  };
 }
 
 export const TradingCardsGrid = ({
@@ -13,26 +18,26 @@ export const TradingCardsGrid = ({
   previousPrice,
   volume,
   rsi,
-  sentiment
+  sentiment,
+  aiAnalysis = {}
 }: TradingCardsGridProps) => {
   const calculateChange = (current: number, previous: number) => {
     return ((current - previous) / previous) * 100;
   };
 
-  // Simulated chart analysis data (replace with actual analysis logic)
-  const chartObservations = [
+  const chartObservations = aiAnalysis.chartObservations?.join("\n") || [
     "Support level at 0.0525",
     "Resistance at 0.0535",
     "Rising wedge pattern forming"
   ].join("\n");
 
-  const tradeSignals = [
+  const tradeSignals = aiAnalysis.tradeSignals?.join("\n") || [
     "Bullish MACD crossover",
     "RSI showing oversold",
     "Volume spike detected"
   ].join("\n");
 
-  const priceAction = [
+  const priceAction = aiAnalysis.priceAction?.join("\n") || [
     "Higher lows in last 4 candles",
     "Avg daily range: 2.3%",
     "Bullish engulfing pattern"

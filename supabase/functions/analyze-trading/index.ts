@@ -33,6 +33,9 @@ serve(async (req) => {
             text: `Analyze this trading chart screenshot and extract:
               1. Find any Solana token address (Base58 string, 32-44 chars)
               2. Analyze the chart data
+              3. Identify key chart observations (support/resistance levels, patterns)
+              4. Identify trading signals
+              5. Analyze price action
 
               Return ONLY this JSON:
               {
@@ -45,7 +48,10 @@ serve(async (req) => {
                   "MA_10": number,
                   "MACD": [number, number, number],
                   "RSI_14": number
-                }
+                },
+                "chartObservations": ["string", "string", "string"],
+                "tradeSignals": ["string", "string", "string"],
+                "priceAction": ["string", "string", "string"]
               }`
           }, {
             inline_data: {

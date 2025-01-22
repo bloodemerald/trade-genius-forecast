@@ -21,6 +21,21 @@ const Index = () => {
       MACD: [-0.001757, 0.008922, 0.002650],
       RSI_14: 46.49,
     },
+    chartObservations: [
+      "Support level at 0.0525",
+      "Resistance at 0.0535",
+      "Rising wedge pattern forming"
+    ],
+    tradeSignals: [
+      "Bullish MACD crossover",
+      "RSI showing oversold",
+      "Volume spike detected"
+    ],
+    priceAction: [
+      "Higher lows in last 4 candles",
+      "Avg daily range: 2.3%",
+      "Bullish engulfing pattern"
+    ]
   });
   const [loading, setLoading] = useState(false);
   const [aiResponse, setAIResponse] = useState<AIResponse>({
@@ -143,6 +158,11 @@ const Index = () => {
             volume={data.volume}
             rsi={data.indicators.RSI_14}
             sentiment={aiResponse.sentiment}
+            aiAnalysis={{
+              chartObservations: data.chartObservations,
+              tradeSignals: data.tradeSignals,
+              priceAction: data.priceAction
+            }}
           />
 
           <TradingScenariosSection 
