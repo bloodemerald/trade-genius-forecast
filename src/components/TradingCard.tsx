@@ -7,6 +7,7 @@ interface TradingCardProps {
   change: number;
   isPrice?: boolean;
   showPercentage?: boolean;
+  customContent?: string;
 }
 
 export const TradingCard = ({ 
@@ -14,7 +15,8 @@ export const TradingCard = ({
   value, 
   change, 
   isPrice = false,
-  showPercentage = false 
+  showPercentage = false,
+  customContent
 }: TradingCardProps) => {
   const formatValue = (val: number | null) => {
     if (val === null || val === undefined) return "N/A";
@@ -65,12 +67,20 @@ export const TradingCard = ({
       <h3 className="text-sm font-medium text-[#D6BCFA] mb-2 relative z-10">{title}</h3>
       
       <div className="flex items-baseline gap-2 relative z-10 overflow-hidden">
-        <div className="overflow-x-auto scrollbar-hide">
-          <span className="text-2xl font-semibold text-white whitespace-nowrap">
-            {formatValue(value)}
-          </span>
-        </div>
-        {getChangeDisplay()}
+        {customContent ? (
+          <div className="text-sm text-white whitespace-pre-line">
+            {customContent}
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto scrollbar-hide">
+              <span className="text-2xl font-semibold text-white whitespace-nowrap">
+                {formatValue(value)}
+              </span>
+            </div>
+            {getChangeDisplay()}
+          </>
+        )}
       </div>
       
       {/* Decorative elements inspired by Final Fantasy UI */}
