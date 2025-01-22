@@ -7,7 +7,7 @@ import { Header } from "@/components/trading/Header";
 import { ImageAnalysisSection } from "@/components/trading/ImageAnalysisSection";
 import { TradingCardsGrid } from "@/components/trading/TradingCardsGrid";
 import { TradingScenariosSection } from "@/components/trading/TradingScenariosSection";
-import { TradingChart } from "@/components/trading/TradingChart";
+import { TradingViewChart } from "@/components/trading/TradingViewChart";
 import type { TradingData, AIResponse } from "@/types/trading";
 
 const Index = () => {
@@ -136,12 +136,6 @@ const Index = () => {
     return ((current - previous) / previous) * 100;
   };
 
-  // Transform price data for the chart
-  const chartData = data.price.map((price, index) => ({
-    name: `T${index + 1}`,
-    value: price
-  }));
-
   return (
     <ThemeProvider attribute="class" defaultTheme="dark">
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background text-foreground p-8 transition-colors duration-300">
@@ -164,7 +158,7 @@ const Index = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <TradingChart data={chartData} />
+            <TradingViewChart symbol={data.symbol} />
           </motion.div>
 
           <TradingCardsGrid
