@@ -12,36 +12,24 @@ import type { TradingData, AIResponse } from "@/types/trading";
 
 const Index = () => {
   const [data, setData] = useState<TradingData>({
-    symbol: "BARRON/SOL",
+    symbol: "SOL",
     tokenAddress: null,
-    price: [0.05265, 0.05516, 0.05265, 0.05297],
-    volume: 198947,
+    price: [0, 0, 0, 0],
+    volume: 0,
     indicators: {
-      EMA_9: 0.05764,
-      MA_10: 0.05865,
-      MACD: [-0.001757, 0.008922, 0.002650],
-      RSI_14: 46.49,
+      EMA_9: 0,
+      MA_10: 0,
+      MACD: [0, 0, 0],
+      RSI_14: 0,
     },
-    chartObservations: [
-      "Support level at 0.0525",
-      "Resistance at 0.0535",
-      "Rising wedge pattern forming"
-    ],
-    tradeSignals: [
-      "Bullish MACD crossover",
-      "RSI showing oversold",
-      "Volume spike detected"
-    ],
-    priceAction: [
-      "Higher lows in last 4 candles",
-      "Avg daily range: 2.3%",
-      "Bullish engulfing pattern"
-    ]
+    chartObservations: [],
+    tradeSignals: [],
+    priceAction: []
   });
   const [loading, setLoading] = useState(false);
   const [aiResponse, setAIResponse] = useState<AIResponse>({
     suggestion: '',
-    sentiment: 50,
+    sentiment: 0,
     confidence: 0
   });
   const { toast } = useToast();
@@ -67,7 +55,6 @@ const Index = () => {
     const riskMultiplier = isOversold ? 0.8 : isOverbought ? 1.2 : 1;
     const rewardMultiplier = trendStrength > 0.005 ? 1.5 : 1;
     
-    // Calculate base confidence based on technical indicators
     const rsiConfidence = data.indicators.RSI_14 > 70 || data.indicators.RSI_14 < 30 ? 30 : 20;
     const macdConfidence = trendStrength > 0.005 ? 30 : 20;
     const volumeConfidence = data.volume > 100000 ? 20 : 10;
