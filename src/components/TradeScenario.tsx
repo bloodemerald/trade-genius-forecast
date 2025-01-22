@@ -67,7 +67,6 @@ export const TradeScenario = ({
       transition={{ duration: 0.3, delay: index * 0.1 }}
       className="relative backdrop-blur-md bg-[#1A1F2C]/90 rounded-xl p-6 shadow-lg border border-[#9b87f5]/20 overflow-hidden group hover:border-[#9b87f5]/40 transition-all duration-300"
     >
-      {/* Animated gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#9b87f5]/5 via-transparent to-[#D6BCFA]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
       {/* Glowing line effect */}
@@ -93,10 +92,12 @@ export const TradeScenario = ({
                 : "text-red-400 border-red-400/30 bg-red-400/10"
             }`}
           >
-            {confidence}% Confidence
+            {Math.round(confidence)}% Confidence
           </span>
         </div>
       </div>
+      
+      {/* ... keep existing code (Price details and scenario information) */}
       
       <div className="space-y-4 relative z-10">
         <motion.div 
