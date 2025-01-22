@@ -20,7 +20,7 @@ export const ImageAnalysisSection = ({
 }: ImageAnalysisSectionProps) => {
   const captureChart = async () => {
     try {
-      const chartElement = document.querySelector('#trading-chart-container');
+      const chartElement = document.querySelector('#trading-chart-container') as HTMLElement;
       if (!chartElement) {
         toast.error("Chart not found. Please wait for it to load.");
         return;
