@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface TradingViewChartProps {
   symbol: string;
@@ -46,7 +46,7 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
                 'MACD@tv-basicstudies'
               ]
             });
-            setLoading(false);
+            setTimeout(() => setLoading(false), 1000); // Add a small delay to ensure chart loads
             return;
           }
         }
@@ -59,13 +59,11 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
           const pair = data.pairs[0];
           setPairAddress(pair.pairAddress);
           
-          const tradingViewSymbol = `${pair.baseToken.symbol}${pair.quoteToken.symbol}`;
-          
           if (containerRef.current) {
             new window.TradingView.widget({
               width: '100%',
               height: 500,
-              symbol: tradingViewSymbol,
+              symbol: `${pair.baseToken.symbol}${pair.quoteToken.symbol}`,
               interval: 'D',
               timezone: 'Etc/UTC',
               theme: 'dark',
@@ -84,9 +82,9 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
                 'MACD@tv-basicstudies'
               ]
             });
+            setTimeout(() => setLoading(false), 1000); // Add a small delay to ensure chart loads
           }
         }
-        setLoading(false);
       } catch (error) {
         console.error('Error fetching pair data:', error);
         setLoading(false);
@@ -111,39 +109,42 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
     };
   }, [symbol]);
 
-  if (loading) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="w-full h-[500px] bg-trading-card border border-trading-border rounded-lg flex items-center justify-center"
-      >
-        <motion.div 
-          className="flex items-center gap-2"
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        >
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Loading chart...</span>
-        </motion.div>
-      </motion.div>
-    );
-  }
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      id="trading-chart-container" 
-      className="w-full bg-trading-card border border-trading-border rounded-lg overflow-hidden"
-    >
-      <div
-        id={`tradingview_${symbol.toLowerCase().replace('/', '_')}`}
-        ref={containerRef}
-        className="w-full"
-      />
-    </motion.div>
+    <AnimatePresence mode="wait">
+      {loading ? (
+        <motion.div 
+          key="loading"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="w-full h-[500px] bg-trading-card border border-trading-border rounded-lg flex items-center justify-center"
+        >
+          <motion.div 
+            className="flex items-center gap-2"
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading chart...</span>
+          </motion.div>
+        </motion.div>
+      ) : (
+        <motion.div
+          key="chart"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          id="trading-chart-container" 
+          className="w-full h-[500px] bg-trading-card border border-trading-border rounded-lg overflow-hidden"
+        >
+          <div
+            id={`tradingview_${symbol.toLowerCase().replace('/', '_')}`}
+            ref={containerRef}
+            className="w-full h-full"
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
