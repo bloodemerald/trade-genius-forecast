@@ -47,6 +47,17 @@ const Index = () => {
   const { toast } = useToast();
 
   const calculateScenarios = (currentPrice: number) => {
+    if (!currentPrice || isNaN(currentPrice)) {
+      return Array(3).fill({
+        entry: 0,
+        stopLoss: 0,
+        takeProfit: 0,
+        confidence: 0,
+        riskReward: 0,
+        potential: 0
+      });
+    }
+
     const volatility = Math.abs(data.price[1] - data.price[2]) / data.price[3] * 100;
     const averageVolume = data.volume;
     const isOverbought = data.indicators.RSI_14 > 70;

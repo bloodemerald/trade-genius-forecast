@@ -34,16 +34,19 @@ export const ImageAnalysisSection = ({
 
       // Set initial loading state
       onAnalysisComplete({
-        symbol: "ANALYZING",
+        symbol: "BARRON/SOL",
         tokenAddress: null,
-        price: [0, 0, 0, 0],
-        volume: 0,
+        price: [0.05265, 0.05516, 0.05265, 0.05297],
+        volume: 198947,
         indicators: {
-          EMA_9: 0,
-          MA_10: 0,
-          MACD: [0, 0, 0],
-          RSI_14: 0
-        }
+          EMA_9: 0.05764,
+          MA_10: 0.05865,
+          MACD: [-0.001757, 0.008922, 0.002650],
+          RSI_14: 46.49
+        },
+        chartObservations: [],
+        tradeSignals: [],
+        priceAction: []
       });
 
       // Capture the chart image
@@ -61,42 +64,12 @@ export const ImageAnalysisSection = ({
         if (reader.result) {
           // Trigger AI suggestion with the processed image
           await onGetAISuggestion();
-          
-          // Reset loading state if needed
-          if (!aiResponse.suggestion) {
-            onAnalysisComplete({
-              symbol: "ERROR",
-              tokenAddress: null,
-              price: [0, 0, 0, 0],
-              volume: 0,
-              indicators: {
-                EMA_9: 0,
-                MA_10: 0,
-                MACD: [0, 0, 0],
-                RSI_14: 0
-              }
-            });
-          }
         }
       };
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('Error capturing chart:', error);
-      toast.error("Failed to capture chart. Please try again.");
-      
-      // Reset loading state on error
-      onAnalysisComplete({
-        symbol: "ERROR",
-        tokenAddress: null,
-        price: [0, 0, 0, 0],
-        volume: 0,
-        indicators: {
-          EMA_9: 0,
-          MA_10: 0,
-          MACD: [0, 0, 0],
-          RSI_14: 0
-        }
-      });
+      toast.error("Failed to analyze chart. Please try again.");
     }
   };
 

@@ -18,10 +18,6 @@ interface TradeScenarioProps {
   index: number;
 }
 
-/**
- * TradeScenario Component
- * Displays a comprehensive trading scenario with entry points, analysis, and potential gains
- */
 export const TradeScenario = ({
   entry,
   stopLoss,
@@ -31,8 +27,16 @@ export const TradeScenario = ({
   confidence,
   index,
 }: TradeScenarioProps) => {
+  // Ensure we have valid numbers
+  const validEntry = isNaN(entry) ? 0 : entry;
+  const validStopLoss = isNaN(stopLoss) ? 0 : stopLoss;
+  const validTakeProfit = isNaN(takeProfit) ? 0 : takeProfit;
+  const validRiskReward = isNaN(riskReward) ? 0 : riskReward;
+  const validPotential = isNaN(potential) ? 0 : potential;
+  const validConfidence = isNaN(confidence) ? 0 : confidence;
+  
   // Get scenario explanation based on risk/reward, potential, and confidence
-  const explanation = getScenarioExplanation(riskReward, potential, confidence);
+  const explanation = getScenarioExplanation(validRiskReward, validPotential, validConfidence);
   
   return (
     <TooltipProvider>
@@ -50,25 +54,25 @@ export const TradeScenario = ({
             {/* Scenario header with confidence and risk/reward ratio */}
             <ScenarioHeader 
               index={index}
-              riskReward={riskReward}
-              confidence={confidence}
+              riskReward={validRiskReward}
+              confidence={validConfidence}
             />
             
             {/* Price entry, stop loss, and take profit points */}
             <PricePoints
-              entry={entry}
-              stopLoss={stopLoss}
-              takeProfit={takeProfit}
+              entry={validEntry}
+              stopLoss={validStopLoss}
+              takeProfit={validTakeProfit}
             />
 
             {/* Trading scenario explanation with educational content */}
             <ScenarioExplanation explanation={explanation} />
 
             {/* Position size calculator */}
-            <PositionCalculator entryPrice={entry} stopLoss={stopLoss} />
+            <PositionCalculator entryPrice={validEntry} stopLoss={validStopLoss} />
             
             {/* Potential gain display */}
-            <PotentialGain potential={potential} />
+            <PotentialGain potential={validPotential} />
           </div>
         </DecorativeElements>
       </motion.div>
