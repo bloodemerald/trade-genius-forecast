@@ -61,6 +61,7 @@ export const ImageAnalysisSection = ({
               RSI_14: 0
             }
           });
+          onGetAISuggestion();
         }
       };
       reader.readAsDataURL(file);
@@ -75,60 +76,32 @@ export const ImageAnalysisSection = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      className="backdrop-blur-lg bg-[#1A1F2C]/50 rounded-2xl p-6 border border-[#9b87f5]/20 relative overflow-hidden group hover:border-[#9b87f5]/40 transition-all duration-300"
+      className="absolute top-4 right-4 z-10"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-[#9b87f5]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <h2 className="text-xl font-semibold mb-4 text-[#9b87f5] relative z-10">AI Analysis</h2>
-      <div className="relative z-10 space-y-4">
-        <div className="flex gap-4">
-          <Button
-            onClick={captureChart}
-            disabled={loading}
-            className="flex-1 bg-gradient-to-r from-[#9b87f5] to-[#8b77e5] hover:from-[#8b77e5] hover:to-[#7a66d4] text-white shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                <span>Analyzing Chart...</span>
-              </>
-            ) : (
-              <>
-                <Camera className="mr-2 h-5 w-5" />
-                <span>Take Chart Snapshot</span>
-              </>
-            )}
-          </Button>
-
-          <Button
-            onClick={onGetAISuggestion}
-            disabled={loading}
-            className="flex-1 bg-gradient-to-r from-[#9b87f5] to-[#8b77e5] hover:from-[#8b77e5] hover:to-[#7a66d4] text-white shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                <span>Getting AI Insights...</span>
-              </>
-            ) : (
-              <>
-                <Brain className="mr-2 h-5 w-5" />
-                <span>Get AI Trading Suggestion</span>
-              </>
-            )}
-          </Button>
-        </div>
-
-        {aiResponse.suggestion && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className="p-4 rounded-lg bg-[#1A1F2C]/50 border border-[#9b87f5]/20 relative z-10"
-          >
-            <p className="text-sm text-[#D6BCFA] leading-relaxed">{aiResponse.suggestion}</p>
-          </motion.div>
+      <Button
+        onClick={captureChart}
+        disabled={loading}
+        size="icon"
+        variant="ghost"
+        className="bg-trading-card/50 hover:bg-trading-card/80 backdrop-blur-sm transition-all duration-300 group"
+      >
+        {loading ? (
+          <Loader2 className="h-5 w-5 animate-spin text-trading-accent" />
+        ) : (
+          <Brain className="h-5 w-5 text-trading-accent transition-transform group-hover:scale-110" />
         )}
-      </div>
+      </Button>
+
+      {aiResponse.suggestion && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="mt-4 p-4 rounded-lg bg-trading-card/90 backdrop-blur-sm border border-trading-border w-64"
+        >
+          <p className="text-sm text-[#D6BCFA] leading-relaxed">{aiResponse.suggestion}</p>
+        </motion.div>
+      )}
     </motion.div>
   );
 };
