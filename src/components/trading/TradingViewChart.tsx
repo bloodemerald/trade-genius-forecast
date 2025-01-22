@@ -9,6 +9,7 @@ interface TradingViewChartProps {
 declare global {
   interface Window {
     TradingView: any;
+    tvWidget: any;
   }
 }
 
@@ -18,13 +19,14 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let widget: any = null;
     const fetchPairData = async () => {
       try {
         setLoading(true);
         // For Coinbase pairs, directly use COINBASE:SOLUSD format
         if (symbol === "SOL/USD") {
           if (containerRef.current) {
-            new window.TradingView.widget({
+            widget = new window.TradingView.widget({
               width: '100%',
               height: 500,
               symbol: "COINBASE:SOLUSD",
@@ -44,9 +46,13 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
                 'RSI@tv-basicstudies',
                 'MASimple@tv-basicstudies',
                 'MACD@tv-basicstudies'
-              ]
+              ],
+              // Add onChartReady callback
+              onChartReady: () => {
+                window.tvWidget = widget;
+                setLoading(false);
+              }
             });
-            setTimeout(() => setLoading(false), 1000); // Add a small delay to ensure chart loads
             return;
           }
         }
@@ -60,7 +66,7 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
           setPairAddress(pair.pairAddress);
           
           if (containerRef.current) {
-            new window.TradingView.widget({
+            widget = new window.TradingView.widget({
               width: '100%',
               height: 500,
               symbol: `${pair.baseToken.symbol}${pair.quoteToken.symbol}`,
@@ -80,9 +86,13 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
                 'RSI@tv-basicstudies',
                 'MASimple@tv-basicstudies',
                 'MACD@tv-basicstudies'
-              ]
+              ],
+              // Add onChartReady callback
+              onChartReady: () => {
+                window.tvWidget = widget;
+                setLoading(false);
+              }
             });
-            setTimeout(() => setLoading(false), 1000); // Add a small delay to ensure chart loads
           }
         }
       } catch (error) {
@@ -102,10 +112,16 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
     document.head.appendChild(script);
 
     return () => {
+      // Cleanup
+      if (window.tvWidget) {
+        window.tvWidget.remove();
+        window.tvWidget = null;
+      }
       const scriptElement = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
       if (scriptElement) {
         scriptElement.remove();
       }
+      setLoading(true);
     };
   }, [symbol]);
 
