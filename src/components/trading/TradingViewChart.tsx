@@ -20,18 +20,15 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
     const fetchPairData = async () => {
       try {
         setLoading(true);
-        // Search for the trading pair using DexScreener API
         const response = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${symbol}`);
         const data = await response.json();
         
         if (data.pairs && data.pairs.length > 0) {
-          const pair = data.pairs[0]; // Get the first matching pair
+          const pair = data.pairs[0];
           setPairAddress(pair.pairAddress);
           
-          // Construct the symbol string using baseToken and quoteToken
           const tradingViewSymbol = `${pair.baseToken.symbol}${pair.quoteToken.symbol}`;
           
-          // Load TradingView widget with the correct pair
           const script = document.createElement('script');
           script.src = 'https://s3.tradingview.com/tv.js';
           script.async = true;
@@ -75,7 +72,6 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
     }
 
     return () => {
-      // Cleanup script tag on unmount
       const scriptElement = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
       if (scriptElement) {
         scriptElement.remove();
@@ -95,7 +91,7 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
   }
 
   return (
-    <div className="w-full bg-trading-card border border-trading-border rounded-lg overflow-hidden">
+    <div id="trading-chart-container" className="w-full bg-trading-card border border-trading-border rounded-lg overflow-hidden">
       <div
         id={`tradingview_${symbol.toLowerCase().replace('/', '_')}`}
         ref={containerRef}
