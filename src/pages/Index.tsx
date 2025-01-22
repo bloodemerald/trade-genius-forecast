@@ -12,7 +12,7 @@ import type { TradingData, AIResponse } from "@/types/trading";
 
 const Index = () => {
   const [data, setData] = useState<TradingData>({
-    symbol: "SOL",
+    symbol: "SOL/USD",
     tokenAddress: null,
     price: [0, 0, 0, 0],
     volume: 0,
