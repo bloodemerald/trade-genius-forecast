@@ -7,12 +7,12 @@ interface HeaderProps {
 
 export const Header = ({ symbol }: HeaderProps) => {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between mb-8">
       <div>
         <motion.h1 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#9b87f5] to-[#D6BCFA]"
+          className="text-3xl font-bold text-foreground"
         >
           {symbol}
         </motion.h1>
@@ -29,7 +29,7 @@ export const Header = ({ symbol }: HeaderProps) => {
         <motion.div 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="text-sm text-muted-foreground bg-background/50 px-4 py-2 rounded-full border border-[#9b87f5]/20"
+          className="text-sm text-muted-foreground bg-trading-card px-4 py-2 rounded-lg border border-trading-border"
         >
           Last updated: {new Date().toLocaleTimeString()}
         </motion.div>

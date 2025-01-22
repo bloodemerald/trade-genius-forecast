@@ -64,6 +64,13 @@ export default {
           DEFAULT: "#6b7280",
           dark: "#4b5563",
         },
+        trading: {
+          background: "#1A1F2C",
+          card: "#222632",
+          accent: "#22c55e",
+          muted: "#9CA3AF",
+          border: "rgba(155, 135, 245, 0.2)",
+        }
       },
       keyframes: {
         "accordion-down": {
