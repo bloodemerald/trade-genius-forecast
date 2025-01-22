@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TradingData, AIResponse } from "@/types/trading";
@@ -83,19 +83,29 @@ export const ImageAnalysisSection = ({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              onClick={captureChart}
-              disabled={loading}
-              size="lg"
-              variant="ghost"
-              className="w-14 h-14 bg-trading-card/50 hover:bg-trading-card/80 backdrop-blur-sm transition-all duration-300 group"
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              {loading ? (
-                <Loader2 className="h-8 w-8 animate-spin text-trading-accent" />
-              ) : (
-                <Brain className="h-8 w-8 text-trading-accent transition-transform group-hover:scale-110" />
-              )}
-            </Button>
+              <Button
+                onClick={captureChart}
+                disabled={loading}
+                size="lg"
+                variant="ghost"
+                className="w-14 h-14 bg-trading-card/50 hover:bg-trading-card/80 backdrop-blur-sm transition-all duration-300 group"
+              >
+                {loading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Loader2 className="h-8 w-8 text-trading-accent" />
+                  </motion.div>
+                ) : (
+                  <Brain className="h-8 w-8 text-trading-accent transition-transform group-hover:scale-110" />
+                )}
+              </Button>
+            </motion.div>
           </TooltipTrigger>
           <TooltipContent>
             <p>Analyze Chart with AI</p>
@@ -103,16 +113,19 @@ export const ImageAnalysisSection = ({
         </Tooltip>
       </TooltipProvider>
 
-      {aiResponse.suggestion && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="w-full max-w-md rounded-lg bg-trading-card/90 backdrop-blur-sm border border-trading-border p-4"
-        >
-          <p className="text-sm text-[#D6BCFA] leading-relaxed">{aiResponse.suggestion}</p>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {aiResponse.suggestion && (
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 50 }}
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-md rounded-lg bg-trading-card/90 backdrop-blur-sm border border-trading-border p-4"
+          >
+            <p className="text-sm text-[#D6BCFA] leading-relaxed">{aiResponse.suggestion}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

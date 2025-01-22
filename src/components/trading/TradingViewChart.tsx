@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface TradingViewChartProps {
   symbol: string;
@@ -112,22 +113,37 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
 
   if (loading) {
     return (
-      <div className="w-full h-[500px] bg-trading-card border border-trading-border rounded-lg flex items-center justify-center">
-        <div className="flex items-center gap-2">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="w-full h-[500px] bg-trading-card border border-trading-border rounded-lg flex items-center justify-center"
+      >
+        <motion.div 
+          className="flex items-center gap-2"
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
           <Loader2 className="h-5 w-5 animate-spin" />
           <span>Loading chart...</span>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     );
   }
 
   return (
-    <div id="trading-chart-container" className="w-full bg-trading-card border border-trading-border rounded-lg overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      id="trading-chart-container" 
+      className="w-full bg-trading-card border border-trading-border rounded-lg overflow-hidden"
+    >
       <div
         id={`tradingview_${symbol.toLowerCase().replace('/', '_')}`}
         ref={containerRef}
         className="w-full"
       />
-    </div>
+    </motion.div>
   );
 };
