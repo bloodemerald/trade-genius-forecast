@@ -97,7 +97,7 @@ export const ImageAnalysisSection = ({
                 {loading ? (
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   >
                     <Loader2 className="h-8 w-8 text-trading-accent" />
                   </motion.div>
