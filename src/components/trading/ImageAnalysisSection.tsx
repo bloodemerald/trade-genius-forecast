@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Brain, Camera, Loader2 } from "lucide-react";
+import { Brain, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TradingData, AIResponse } from "@/types/trading";
 import html2canvas from "html2canvas";
@@ -32,6 +32,20 @@ export const ImageAnalysisSection = ({
         return;
       }
 
+      // Set initial analysis state
+      onAnalysisComplete({
+        symbol: "ANALYZING",
+        tokenAddress: null,
+        price: [0, 0, 0, 0],
+        volume: 0,
+        indicators: {
+          EMA_9: 0,
+          MA_10: 0,
+          MACD: [0, 0, 0],
+          RSI_14: 0
+        }
+      });
+
       const canvas = await html2canvas(chartElement);
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
       
@@ -41,20 +55,9 @@ export const ImageAnalysisSection = ({
       const file = new File([blob], "chart-snapshot.jpg", { type: "image/jpeg" });
       
       const reader = new FileReader();
-      reader.onload = async (e) => {
-        if (e.target?.result) {
-          onAnalysisComplete({
-            symbol: "ANALYZING",
-            tokenAddress: null,
-            price: [0, 0, 0, 0],
-            volume: 0,
-            indicators: {
-              EMA_9: 0,
-              MA_10: 0,
-              MACD: [0, 0, 0],
-              RSI_14: 0
-            }
-          });
+      reader.onload = async () => {
+        if (reader.result) {
+          // Only trigger AI suggestion after image is processed
           onGetAISuggestion();
         }
       };
