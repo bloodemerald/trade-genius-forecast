@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface TradingViewChartProps {
   symbol: string;
@@ -12,43 +13,83 @@ declare global {
 
 export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [pairAddress, setPairAddress] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/tv.js';
-    script.async = true;
-    script.onload = () => {
-      if (containerRef.current) {
-        new window.TradingView.widget({
-          width: '100%',
-          height: 500,
-          symbol: symbol,
-          interval: 'D',
-          timezone: 'Etc/UTC',
-          theme: 'dark',
-          style: '1',
-          locale: 'en',
-          toolbar_bg: '#1A1F2C',
-          enable_publishing: false,
-          hide_side_toolbar: false,
-          allow_symbol_change: true,
-          container_id: containerRef.current.id,
-          backgroundColor: '#1A1F2C',
-          gridColor: 'rgba(155, 135, 245, 0.2)',
-          studies: [
-            'RSI@tv-basicstudies',
-            'MASimple@tv-basicstudies',
-            'MACD@tv-basicstudies'
-          ]
-        });
+    const fetchPairData = async () => {
+      try {
+        setLoading(true);
+        // Search for the trading pair using DexScreener API
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${symbol}`);
+        const data = await response.json();
+        
+        if (data.pairs && data.pairs.length > 0) {
+          const pair = data.pairs[0]; // Get the first matching pair
+          setPairAddress(pair.pairAddress);
+          
+          // Load TradingView widget with the correct pair
+          const script = document.createElement('script');
+          script.src = 'https://s3.tradingview.com/tv.js';
+          script.async = true;
+          script.onload = () => {
+            if (containerRef.current) {
+              new window.TradingView.widget({
+                width: '100%',
+                height: 500,
+                symbol: `${pair.dexId}:${pair.pairAddress}`,
+                interval: 'D',
+                timezone: 'Etc/UTC',
+                theme: 'dark',
+                style: '1',
+                locale: 'en',
+                toolbar_bg: '#1A1F2C',
+                enable_publishing: false,
+                hide_side_toolbar: false,
+                allow_symbol_change: true,
+                container_id: containerRef.current.id,
+                backgroundColor: '#1A1F2C',
+                gridColor: 'rgba(155, 135, 245, 0.2)',
+                studies: [
+                  'RSI@tv-basicstudies',
+                  'MASimple@tv-basicstudies',
+                  'MACD@tv-basicstudies'
+                ]
+              });
+            }
+          };
+          document.head.appendChild(script);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error fetching pair data:', error);
+        setLoading(false);
       }
     };
-    document.head.appendChild(script);
+
+    if (symbol) {
+      fetchPairData();
+    }
 
     return () => {
-      script.remove();
+      // Cleanup script tag on unmount
+      const scriptElement = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
+      if (scriptElement) {
+        scriptElement.remove();
+      }
     };
   }, [symbol]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-[500px] bg-trading-card border border-trading-border rounded-lg flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Loading chart...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full bg-trading-card border border-trading-border rounded-lg overflow-hidden">
