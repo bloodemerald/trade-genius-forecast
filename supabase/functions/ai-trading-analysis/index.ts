@@ -60,34 +60,11 @@ serve(async (req) => {
               - Market Sentiment Score: ${initialSentiment}
               - Confidence Score: ${initialConfidence}
 
-              Analyze this data and provide:
-              1. Market Sentiment Score (0-100):
-                - 0-20: Strongly Bearish
-                - 21-40: Moderately Bearish
-                - 41-45: Slightly Bearish
-                - 46-55: Neutral
-                - 56-60: Slightly Bullish
-                - 61-80: Moderately Bullish
-                - 81-100: Strongly Bullish
-
-              2. Confidence Score (0-100):
-                Based on:
-                - Technical indicator alignment
-                - Volume confirmation
-                - Price action strength
-                - Overall market conditions
-
-              3. Trading Plan:
-                - Entry Strategy
-                - Risk Management (Stop Loss)
-                - Take Profit Targets
-                - Position Sizing
-
-              Return ONLY this JSON:
+              Analyze this data and provide a trading suggestion in exactly this JSON format (no markdown, no backticks):
               {
-                "suggestion": "string (4-5 sentences of analysis)",
-                "sentiment": number (0-100),
-                "confidence": number (0-100)
+                "suggestion": "4-5 sentences of analysis",
+                "sentiment": number between 0-100,
+                "confidence": number between 0-100
               }`
           }]
         }],
@@ -113,8 +90,16 @@ serve(async (req) => {
       throw new Error('Invalid response structure from Gemini API');
     }
 
+    // Clean the response text by removing any markdown formatting
+    const cleanText = result.candidates[0].content.parts[0].text
+      .replace(/```json\s*/g, '')
+      .replace(/```\s*/g, '')
+      .trim();
+
+    console.log('Cleaned text:', cleanText);
+
     // Parse the AI response and combine with our technical analysis
-    const aiResponse = JSON.parse(result.candidates[0].content.parts[0].text.trim());
+    const aiResponse = JSON.parse(cleanText);
     
     // Blend AI sentiment with technical sentiment
     const finalSentiment = Math.round((aiResponse.sentiment + initialSentiment) / 2);
