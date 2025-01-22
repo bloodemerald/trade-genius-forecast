@@ -20,6 +20,37 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
     const fetchPairData = async () => {
       try {
         setLoading(true);
+        // For Coinbase pairs, directly use COINBASE:SOLUSD format
+        if (symbol === "SOL/USD") {
+          if (containerRef.current) {
+            new window.TradingView.widget({
+              width: '100%',
+              height: 500,
+              symbol: "COINBASE:SOLUSD",
+              interval: 'D',
+              timezone: 'Etc/UTC',
+              theme: 'dark',
+              style: '1',
+              locale: 'en',
+              toolbar_bg: '#1A1F2C',
+              enable_publishing: false,
+              hide_side_toolbar: false,
+              allow_symbol_change: true,
+              container_id: containerRef.current.id,
+              backgroundColor: '#1A1F2C',
+              gridColor: 'rgba(155, 135, 245, 0.2)',
+              studies: [
+                'RSI@tv-basicstudies',
+                'MASimple@tv-basicstudies',
+                'MACD@tv-basicstudies'
+              ]
+            });
+            setLoading(false);
+            return;
+          }
+        }
+
+        // For other pairs, use DexScreener API
         const response = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${symbol}`);
         const data = await response.json();
         
@@ -29,47 +60,47 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
           
           const tradingViewSymbol = `${pair.baseToken.symbol}${pair.quoteToken.symbol}`;
           
-          const script = document.createElement('script');
-          script.src = 'https://s3.tradingview.com/tv.js';
-          script.async = true;
-          script.onload = () => {
-            if (containerRef.current) {
-              new window.TradingView.widget({
-                width: '100%',
-                height: 500,
-                symbol: tradingViewSymbol,
-                interval: 'D',
-                timezone: 'Etc/UTC',
-                theme: 'dark',
-                style: '1',
-                locale: 'en',
-                toolbar_bg: '#1A1F2C',
-                enable_publishing: false,
-                hide_side_toolbar: false,
-                allow_symbol_change: true,
-                container_id: containerRef.current.id,
-                backgroundColor: '#1A1F2C',
-                gridColor: 'rgba(155, 135, 245, 0.2)',
-                studies: [
-                  'RSI@tv-basicstudies',
-                  'MASimple@tv-basicstudies',
-                  'MACD@tv-basicstudies'
-                ]
-              });
-            }
-          };
-          document.head.appendChild(script);
-          setLoading(false);
+          if (containerRef.current) {
+            new window.TradingView.widget({
+              width: '100%',
+              height: 500,
+              symbol: tradingViewSymbol,
+              interval: 'D',
+              timezone: 'Etc/UTC',
+              theme: 'dark',
+              style: '1',
+              locale: 'en',
+              toolbar_bg: '#1A1F2C',
+              enable_publishing: false,
+              hide_side_toolbar: false,
+              allow_symbol_change: true,
+              container_id: containerRef.current.id,
+              backgroundColor: '#1A1F2C',
+              gridColor: 'rgba(155, 135, 245, 0.2)',
+              studies: [
+                'RSI@tv-basicstudies',
+                'MASimple@tv-basicstudies',
+                'MACD@tv-basicstudies'
+              ]
+            });
+          }
         }
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching pair data:', error);
         setLoading(false);
       }
     };
 
-    if (symbol) {
-      fetchPairData();
-    }
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/tv.js';
+    script.async = true;
+    script.onload = () => {
+      if (symbol) {
+        fetchPairData();
+      }
+    };
+    document.head.appendChild(script);
 
     return () => {
       const scriptElement = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
