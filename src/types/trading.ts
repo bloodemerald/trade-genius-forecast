@@ -1,3 +1,6 @@
+/**
+ * Trading data structure returned from AI analysis
+ */
 export interface TradingData {
   symbol: string;
   tokenAddress: string | null;
@@ -14,6 +17,9 @@ export interface TradingData {
   priceAction?: string[];
 }
 
+/**
+ * AI response structure for trading analysis
+ */
 export interface AIResponse {
   suggestion: string;
   sentiment: number;
