@@ -147,7 +147,7 @@ const Index = () => {
 
           <TradingScenariosSection 
             scenarios={scenarios}
-            confidence={aiResponse.confidence}
+            confidence={aiResponse.confidence || 0}
           />
         </motion.div>
       </div>
