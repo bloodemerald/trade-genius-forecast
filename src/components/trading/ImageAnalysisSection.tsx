@@ -32,15 +32,7 @@ export const ImageAnalysisSection = ({
         return;
       }
 
-      const canvas = await html2canvas(chartElement);
-      const imageData = canvas.toDataURL('image/jpeg', 0.8);
-      
-      // Process the captured image through the AI analysis
-      const response = await fetch(imageData);
-      const blob = await response.blob();
-      const file = new File([blob], "chart-snapshot.jpg", { type: "image/jpeg" });
-      
-      // Set initial analysis state before processing
+      // Set initial loading state
       onAnalysisComplete({
         symbol: "ANALYZING",
         tokenAddress: null,
@@ -54,11 +46,57 @@ export const ImageAnalysisSection = ({
         }
       });
 
-      // Trigger AI suggestion immediately after setting initial state
-      onGetAISuggestion();
+      // Capture the chart image
+      const canvas = await html2canvas(chartElement);
+      const imageData = canvas.toDataURL('image/jpeg', 0.8);
+      
+      // Process the captured image
+      const response = await fetch(imageData);
+      const blob = await response.blob();
+      const file = new File([blob], "chart-snapshot.jpg", { type: "image/jpeg" });
+      
+      // Create a FileReader to process the image
+      const reader = new FileReader();
+      reader.onload = async () => {
+        if (reader.result) {
+          // Trigger AI suggestion with the processed image
+          await onGetAISuggestion();
+          
+          // Reset loading state if needed
+          if (!aiResponse.suggestion) {
+            onAnalysisComplete({
+              symbol: "ERROR",
+              tokenAddress: null,
+              price: [0, 0, 0, 0],
+              volume: 0,
+              indicators: {
+                EMA_9: 0,
+                MA_10: 0,
+                MACD: [0, 0, 0],
+                RSI_14: 0
+              }
+            });
+          }
+        }
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
       console.error('Error capturing chart:', error);
       toast.error("Failed to capture chart. Please try again.");
+      
+      // Reset loading state on error
+      onAnalysisComplete({
+        symbol: "ERROR",
+        tokenAddress: null,
+        price: [0, 0, 0, 0],
+        volume: 0,
+        indicators: {
+          EMA_9: 0,
+          MA_10: 0,
+          MACD: [0, 0, 0],
+          RSI_14: 0
+        }
+      });
     }
   };
 
