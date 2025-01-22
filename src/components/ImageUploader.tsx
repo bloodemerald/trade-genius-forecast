@@ -13,22 +13,23 @@ interface ImageUploaderProps {
  */
 const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleAnalysisComplete = useCallback((data: any) => {
+    onAnalysisComplete(data);
+  }, [onAnalysisComplete]);
+
+  const handleProcessComplete = useCallback(async (imageData: string) => {
+    setIsAnalyzing(true);
+    const { analyzeImage } = AnalysisHandler({ onAnalysisComplete: handleAnalysisComplete });
+    await analyzeImage(imageData);
+    setIsAnalyzing(false);
+  }, [handleAnalysisComplete]);
+
   const { processImage } = ImageProcessor({ onProcessComplete: handleProcessComplete });
-  const { analyzeImage } = AnalysisHandler({ onAnalysisComplete: handleAnalysisComplete });
 
   const handleImageSelected = useCallback((file: File) => {
     processImage(file);
-  }, []);
-
-  const handleProcessComplete = async (imageData: string) => {
-    setIsAnalyzing(true);
-    await analyzeImage(imageData);
-    setIsAnalyzing(false);
-  };
-
-  const handleAnalysisComplete = (data: any) => {
-    onAnalysisComplete(data);
-  };
+  }, [processImage]);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     const items = e.clipboardData.items;
