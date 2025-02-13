@@ -10,23 +10,26 @@ import { TradingScenariosSection } from "@/components/trading/TradingScenariosSe
 import { TradingViewChart } from "@/components/trading/TradingViewChart";
 import type { TradingData, AIResponse } from "@/types/trading";
 
+const initialData: TradingData = {
+  symbol: "SOL/USD",
+  tokenAddress: null,
+  price: [0, 0, 0, 0],
+  volume: 0,
+  indicators: {
+    EMA_9: 0,
+    MA_10: 0,
+    MACD: [0, 0, 0],
+    RSI_14: 0,
+  },
+  chartObservations: [],
+  tradeSignals: [],
+  priceAction: []
+};
+
 const Index = () => {
-  const [data, setData] = useState<TradingData>({
-    symbol: "SOL/USD",
-    tokenAddress: null,
-    price: [0, 0, 0, 0],
-    volume: 0,
-    indicators: {
-      EMA_9: 0,
-      MA_10: 0,
-      MACD: [0, 0, 0],
-      RSI_14: 0,
-    },
-    chartObservations: [],
-    tradeSignals: [],
-    priceAction: []
-  });
+  const [data, setData] = useState<TradingData>(initialData);
   const [loading, setLoading] = useState(false);
+  const [chartLoaded, setChartLoaded] = useState(false);
   const [aiResponse, setAIResponse] = useState<AIResponse>({
     suggestion: '',
     sentiment: 0,
@@ -134,6 +137,11 @@ const Index = () => {
     return ((current - previous) / previous) * 100;
   };
 
+  const handleChartLoad = () => {
+    setChartLoaded(true);
+    console.log("Chart loaded successfully");
+  };
+
   return (
     <ThemeProvider attribute="class" defaultTheme="dark">
       <motion.div 
@@ -167,38 +175,42 @@ const Index = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <TradingViewChart symbol={data.symbol} />
+            <TradingViewChart symbol={data.symbol} onChartLoad={handleChartLoad} />
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <TradingCardsGrid
-              currentPrice={data.price[3]}
-              previousPrice={data.price[0]}
-              volume={data.volume}
-              rsi={data.indicators.RSI_14}
-              sentiment={aiResponse.sentiment}
-              aiAnalysis={{
-                chartObservations: data.chartObservations,
-                tradeSignals: data.tradeSignals,
-                priceAction: data.priceAction
-              }}
-            />
-          </motion.div>
+          {chartLoaded && (
+            <>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <TradingCardsGrid
+                  currentPrice={data.price[3]}
+                  previousPrice={data.price[0]}
+                  volume={data.volume}
+                  rsi={data.indicators.RSI_14}
+                  sentiment={aiResponse.sentiment}
+                  aiAnalysis={{
+                    chartObservations: data.chartObservations,
+                    tradeSignals: data.tradeSignals,
+                    priceAction: data.priceAction
+                  }}
+                />
+              </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <TradingScenariosSection 
-              scenarios={scenarios}
-              confidence={aiResponse.confidence || 0}
-            />
-          </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <TradingScenariosSection 
+                  scenarios={scenarios}
+                  confidence={aiResponse.confidence || 0}
+                />
+              </motion.div>
+            </>
+          )}
         </motion.div>
       </motion.div>
     </ThemeProvider>

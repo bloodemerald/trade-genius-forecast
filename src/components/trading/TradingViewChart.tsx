@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 interface TradingViewChartProps {
   symbol: string;
+  onChartLoad?: () => void;
 }
 
 declare global {
@@ -15,13 +16,12 @@ declare global {
   }
 }
 
-export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
+export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const containerId = 'trading-chart-container';
 
   useEffect(() => {
-    let widget: any = null;
     let isMounted = true;
 
     const loadTradingViewScript = () => {
@@ -33,7 +33,7 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
 
         const script = document.createElement('script');
         script.type = 'text/javascript';
-        script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+        script.src = 'https://s3.tradingview.com/tv.js';
         script.async = true;
         script.onload = () => resolve();
         script.onerror = () => reject(new Error('Failed to load TradingView script'));
@@ -42,37 +42,50 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
     };
 
     const initializeWidget = () => {
-      if (!containerRef.current) return;
+      if (!window.TradingView || !containerRef.current) return;
 
       try {
         const widgetOptions = {
-          container_id: containerId,
-          width: "100%",
-          height: "100%",
+          autosize: true,
           symbol: symbol === "SOL/USD" ? "COINBASE:SOLUSD" : symbol,
-          interval: "D",
-          timezone: "Etc/UTC",
-          theme: "dark",
-          style: "1",
-          locale: "en",
-          toolbar_bg: "#1A1F2C",
+          interval: 'D',
+          timezone: 'Etc/UTC',
+          theme: 'dark',
+          style: '1',
+          locale: 'en',
+          toolbar_bg: '#1A1F2C',
           enable_publishing: false,
           hide_side_toolbar: false,
           allow_symbol_change: true,
+          container_id: containerId,
+          library_path: '/charting_library/',
           studies: [
-            "RSI@tv-basicstudies",
-            "MASimple@tv-basicstudies",
-            "MACD@tv-basicstudies"
+            'RSI@tv-basicstudies',
+            'MASimple@tv-basicstudies',
+            'MACD@tv-basicstudies'
           ],
-          backgroundColor: "#1A1F2C",
-          gridColor: "rgba(155, 135, 245, 0.2)",
+          disabled_features: ["use_localstorage_for_settings"],
+          enabled_features: ["study_templates"],
+          overrides: {
+            "mainSeriesProperties.style": 1,
+            "symbolWatermarkProperties.color": "rgba(0, 0, 0, 0)",
+            "paneProperties.background": "#1A1F2C",
+            "paneProperties.gridProperties.color": "rgba(155, 135, 245, 0.2)"
+          },
+          custom_css_url: '/chart.css',
+          onChartReady: () => {
+            if (isMounted) {
+              setLoading(false);
+              onChartLoad?.();
+            }
+          }
         };
 
         const container = document.getElementById(containerId);
         if (container) {
           container.innerHTML = '';
-          new window.TradingView.widget(widgetOptions);
-          setLoading(false);
+          const widget = new window.TradingView.widget(widgetOptions);
+          window.tvWidget = widget;
         }
       } catch (error) {
         console.error('Error initializing TradingView widget:', error);
@@ -100,12 +113,16 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
 
     return () => {
       isMounted = false;
-      const container = document.getElementById(containerId);
-      if (container) {
-        container.innerHTML = '';
+      if (window.tvWidget) {
+        try {
+          window.tvWidget.remove();
+          window.tvWidget = null;
+        } catch (error) {
+          console.error('Error cleaning up widget:', error);
+        }
       }
     };
-  }, [symbol]);
+  }, [symbol, onChartLoad]);
 
   return (
     <div className="relative w-full h-[500px] rounded-lg overflow-hidden">
