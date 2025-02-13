@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeProvider } from "next-themes";
@@ -14,17 +13,29 @@ import type { TradingData, AIResponse } from "@/types/trading";
 const initialData: TradingData = {
   symbol: "SOL/USD",
   tokenAddress: null,
-  price: [0, 0, 0, 0],
-  volume: 0,
+  price: [98.45, 102.30, 97.80, 101.25],
+  volume: 1458923,
   indicators: {
-    EMA_9: 0,
-    MA_10: 0,
-    MACD: [0, 0, 0],
-    RSI_14: 0,
+    EMA_9: 99.85,
+    MA_10: 98.75,
+    MACD: [1.25, -0.50, 0.75],
+    RSI_14: 58.42
   },
-  chartObservations: [],
-  tradeSignals: [],
-  priceAction: []
+  chartObservations: [
+    "Strong support at $97.50",
+    "Resistance level at $103.00",
+    "Trading above 20-day moving average"
+  ],
+  tradeSignals: [
+    "Positive momentum building",
+    "Volume above average",
+    "Price action remains bullish"
+  ],
+  priceAction: [
+    "Higher lows forming on 4H chart",
+    "Break above recent resistance",
+    "Increased buying pressure"
+  ]
 };
 
 const Index = () => {
