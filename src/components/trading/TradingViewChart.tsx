@@ -11,43 +11,51 @@ interface TradingViewChartProps {
 
 export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const scriptRef = useRef<HTMLScriptElement | null>(null);
   
   useEffect(() => {
     const loadTradingViewWidget = () => {
       if (typeof window.TradingView !== 'undefined' && containerRef.current) {
-        if (window.tvWidget) {
-          window.tvWidget.remove();
+        try {
+          if (window.tvWidget) {
+            window.tvWidget.remove();
+          }
+
+          window.tvWidget = new window.TradingView.MediumWidget({
+            symbols: [[symbol]],
+            chartOnly: true,
+            width: '100%',
+            height: '500',
+            locale: 'en',
+            colorTheme: 'dark',
+            autosize: false,
+            showVolume: true,
+            hideDateRanges: false,
+            hideMarketStatus: false,
+            scalePosition: 'right',
+            scaleMode: 'Normal',
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
+            fontSize: '12',
+            noTimeScale: false,
+            valuesTracking: '1',
+            whereToShow: 'trading-chart-container',
+            container_id: 'trading-chart-container',
+          });
+
+          onChartLoad?.();
+        } catch (error) {
+          console.error('Error initializing TradingView widget:', error);
+          toast.error("Failed to initialize chart. Please refresh the page.");
         }
-
-        window.tvWidget = new window.TradingView.MediumWidget({
-          symbols: [[symbol]],
-          chartOnly: true,
-          width: '100%',
-          height: '500',
-          locale: 'en',
-          colorTheme: 'dark',
-          autosize: false,
-          showVolume: true,
-          hideDateRanges: false,
-          hideMarketStatus: false,
-          scalePosition: 'right',
-          scaleMode: 'Normal',
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
-          fontSize: '12',
-          noTimeScale: false,
-          valuesTracking: '1',
-          whereToShow: 'trading-chart-container',
-          container_id: 'trading-chart-container',
-        });
-
-        onChartLoad?.();
       } else {
         console.error('TradingView library not loaded');
         toast.error("Chart failed to load. Please refresh the page.");
       }
     };
 
+    // Create and load script
     const script = document.createElement('script');
+    scriptRef.current = script;
     script.type = 'text/javascript';
     script.src = 'https://s3.tradingview.com/tv.js';
     script.async = true;
@@ -59,11 +67,20 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
 
     document.head.appendChild(script);
 
+    // Cleanup function
     return () => {
-      if (window.tvWidget) {
-        window.tvWidget.remove();
+      try {
+        if (window.tvWidget) {
+          window.tvWidget.remove();
+          window.tvWidget = null;
+        }
+        
+        if (scriptRef.current && scriptRef.current.parentNode) {
+          scriptRef.current.parentNode.removeChild(scriptRef.current);
+        }
+      } catch (error) {
+        console.error('Error during cleanup:', error);
       }
-      document.head.removeChild(script);
     };
   }, [symbol, onChartLoad]);
 

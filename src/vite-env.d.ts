@@ -21,7 +21,9 @@ interface TradingViewMediumWidget {
     valuesTracking: string;
     whereToShow: string;
     container_id: string;
-  }): any;
+  }): {
+    remove: () => void;
+  };
 }
 
 interface TradingViewStatic {
@@ -31,6 +33,6 @@ interface TradingViewStatic {
 declare global {
   interface Window {
     TradingView: TradingViewStatic;
-    tvWidget: any;
+    tvWidget: { remove: () => void } | null;
   }
 }
