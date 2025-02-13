@@ -10,7 +10,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  TooltipProps
 } from 'recharts';
 
 interface TradingViewChartProps {
@@ -36,8 +37,20 @@ export const TradingViewChart = ({ symbol, onChartLoad, data = [] }: TradingView
     { time: '11:30', price: 101.25 }
   ];
 
+  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+    if (active && payload && payload.length) {
+      const value = payload[0].value;
+      return (
+        <div className="bg-trading-card border border-trading-border p-2 rounded-lg">
+          <p className="text-sm text-foreground">{`$${typeof value === 'number' ? value.toFixed(2) : value}`}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div id="trading-chart-container" className="relative w-full h-[500px] rounded-lg overflow-hidden bg-trading-card border border-trading-border">
+    <div ref={containerRef} id="trading-chart-container" className="relative w-full h-[500px] rounded-lg overflow-hidden bg-trading-card border border-trading-border">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -50,20 +63,9 @@ export const TradingViewChart = ({ symbol, onChartLoad, data = [] }: TradingView
             stroke="#9CA3AF"
             fontSize={12}
             domain={['auto', 'auto']}
-            tickFormatter={(value) => `$${value.toFixed(2)}`}
+            tickFormatter={(value: number) => `$${value.toFixed(2)}`}
           />
-          <Tooltip
-            content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                return (
-                  <div className="bg-trading-card border border-trading-border p-2 rounded-lg">
-                    <p className="text-sm text-foreground">{`$${payload[0].value.toFixed(2)}`}</p>
-                  </div>
-                );
-              }
-              return null;
-            }}
-          />
+          <Tooltip content={CustomTooltip} />
           <Bar 
             dataKey="price" 
             fill="#9b87f5"
