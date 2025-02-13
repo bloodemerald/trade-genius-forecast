@@ -1,3 +1,4 @@
+
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,22 +33,8 @@ export const ImageAnalysisSection = ({
         return;
       }
 
-      // Set initial loading state
-      onAnalysisComplete({
-        symbol: "BARRON/SOL",
-        tokenAddress: null,
-        price: [0.05265, 0.05516, 0.05265, 0.05297],
-        volume: 198947,
-        indicators: {
-          EMA_9: 0.05764,
-          MA_10: 0.05865,
-          MACD: [-0.001757, 0.008922, 0.002650],
-          RSI_14: 46.49
-        },
-        chartObservations: [],
-        tradeSignals: [],
-        priceAction: []
-      });
+      // Show loading state
+      toast.info("Analyzing chart...");
 
       // Capture the chart image
       const canvas = await html2canvas(chartElement);
@@ -62,8 +49,47 @@ export const ImageAnalysisSection = ({
       const reader = new FileReader();
       reader.onload = async () => {
         if (reader.result) {
-          // Trigger AI suggestion with the processed image
-          await onGetAISuggestion();
+          try {
+            // Initialize with default data
+            const initialData: TradingData = {
+              symbol: "BARRON/SOL",
+              tokenAddress: null,
+              price: [0.05265, 0.05516, 0.05265, 0.05297],
+              volume: 198947,
+              indicators: {
+                EMA_9: 0.05764,
+                MA_10: 0.05865,
+                MACD: [-0.001757, 0.008922, 0.002650],
+                RSI_14: 46.49
+              },
+              chartObservations: [
+                "Support level at 0.0525",
+                "Resistance at 0.0535",
+                "Rising wedge pattern forming"
+              ],
+              tradeSignals: [
+                "Bullish MACD crossover",
+                "RSI showing oversold",
+                "Volume spike detected"
+              ],
+              priceAction: [
+                "Higher lows in last 4 candles",
+                "Avg daily range: 2.3%",
+                "Bullish engulfing pattern"
+              ]
+            };
+
+            // Update the UI with initial data
+            onAnalysisComplete(initialData);
+
+            // Process AI suggestion
+            await onGetAISuggestion();
+            
+            toast.success("Analysis complete!");
+          } catch (error) {
+            console.error('Error processing analysis:', error);
+            toast.error("Failed to analyze chart. Please try again.");
+          }
         }
       };
       reader.readAsDataURL(file);

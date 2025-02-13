@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeProvider } from "next-themes";
@@ -50,26 +51,17 @@ const Index = () => {
     }
 
     const volatility = Math.abs(data.price[1] - data.price[2]) / data.price[3] * 100;
-    const averageVolume = data.volume;
-    const isOverbought = data.indicators.RSI_14 > 70;
-    const isOversold = data.indicators.RSI_14 < 30;
     const trendStrength = Math.abs(data.indicators.MACD[2]);
+    const rsiSignal = data.indicators.RSI_14 > 70 ? -1 : data.indicators.RSI_14 < 30 ? 1 : 0;
     
-    const riskMultiplier = isOversold ? 0.8 : isOverbought ? 1.2 : 1;
-    const rewardMultiplier = trendStrength > 0.005 ? 1.5 : 1;
-    
-    const rsiConfidence = data.indicators.RSI_14 > 70 || data.indicators.RSI_14 < 30 ? 30 : 20;
-    const macdConfidence = trendStrength > 0.005 ? 30 : 20;
-    const volumeConfidence = data.volume > 100000 ? 20 : 10;
-    
-    return [
+    const scenarios = [
       {
         entry: currentPrice,
-        stopLoss: currentPrice * (1 - volatility * 0.5 * riskMultiplier / 100),
-        takeProfit: currentPrice * (1 + volatility * 1.25 * rewardMultiplier / 100),
-        confidence: Math.min(85, rsiConfidence + macdConfidence + volumeConfidence),
+        stopLoss: currentPrice * (1 - volatility * 0.5 / 100),
+        takeProfit: currentPrice * (1 + volatility * 1.5 / 100),
+        confidence: 20,
         get riskReward() {
-          return (this.takeProfit - this.entry) / (this.entry - this.stopLoss);
+          return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
         },
         get potential() {
           return ((this.takeProfit - this.entry) / this.entry) * 100;
@@ -77,11 +69,11 @@ const Index = () => {
       },
       {
         entry: currentPrice,
-        stopLoss: currentPrice * (1 - volatility * 0.75 * riskMultiplier / 100),
-        takeProfit: currentPrice * (1 + volatility * 2.25 * rewardMultiplier / 100),
-        confidence: Math.min(75, rsiConfidence + macdConfidence + volumeConfidence - 10),
+        stopLoss: currentPrice * (1 - volatility * 0.75 / 100),
+        takeProfit: currentPrice * (1 + volatility * 2.25 / 100),
+        confidence: 20,
         get riskReward() {
-          return (this.takeProfit - this.entry) / (this.entry - this.stopLoss);
+          return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
         },
         get potential() {
           return ((this.takeProfit - this.entry) / this.entry) * 100;
@@ -89,20 +81,20 @@ const Index = () => {
       },
       {
         entry: currentPrice,
-        stopLoss: currentPrice * (1 - volatility * riskMultiplier / 100),
-        takeProfit: currentPrice * (1 + volatility * 3.375 * rewardMultiplier / 100),
-        confidence: Math.min(65, rsiConfidence + macdConfidence + volumeConfidence - 20),
+        stopLoss: currentPrice * (1 - volatility / 100),
+        takeProfit: currentPrice * (1 + volatility * 3.375 / 100),
+        confidence: 20,
         get riskReward() {
-          return (this.takeProfit - this.entry) / (this.entry - this.stopLoss);
+          return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
         },
         get potential() {
           return ((this.takeProfit - this.entry) / this.entry) * 100;
         }
       }
     ];
-  };
 
-  const scenarios = calculateScenarios(data.price[3]);
+    return scenarios;
+  };
 
   const getAISuggestion = async () => {
     setLoading(true);
@@ -142,6 +134,10 @@ const Index = () => {
     console.log("Chart loaded successfully");
   };
 
+  const handleAnalysisComplete = (newData: TradingData) => {
+    setData(newData);
+  };
+
   return (
     <ThemeProvider attribute="class" defaultTheme="dark">
       <motion.div 
@@ -166,7 +162,7 @@ const Index = () => {
           <ImageAnalysisSection
             loading={loading}
             aiResponse={aiResponse}
-            onAnalysisComplete={setData}
+            onAnalysisComplete={handleAnalysisComplete}
             onGetAISuggestion={getAISuggestion}
           />
 
@@ -205,7 +201,7 @@ const Index = () => {
                 transition={{ delay: 0.4 }}
               >
                 <TradingScenariosSection 
-                  scenarios={scenarios}
+                  scenarios={calculateScenarios(data.price[3])}
                   confidence={aiResponse.confidence || 0}
                 />
               </motion.div>
