@@ -3,76 +3,84 @@ import { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  TooltipProps
-} from 'recharts';
 
 interface TradingViewChartProps {
   symbol: string;
   onChartLoad?: () => void;
-  data?: { time: string; price: number }[];
 }
 
-export const TradingViewChart = ({ symbol, onChartLoad, data = [] }: TradingViewChartProps) => {
+export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    if (containerRef.current) {
-      onChartLoad?.();
-    }
-  }, [onChartLoad]);
+    const loadTradingViewWidget = () => {
+      if (typeof window.TradingView !== 'undefined' && containerRef.current) {
+        if (window.tvWidget) {
+          window.tvWidget.remove();
+        }
 
-  const chartData = data.length > 0 ? data : [
-    { time: '9:30', price: 101.25 },
-    { time: '10:00', price: 102.30 },
-    { time: '10:30', price: 100.80 },
-    { time: '11:00', price: 101.50 },
-    { time: '11:30', price: 101.25 }
-  ];
+        window.tvWidget = new window.TradingView.MediumWidget({
+          symbols: [[symbol]],
+          chartOnly: true,
+          width: '100%',
+          height: '500',
+          locale: 'en',
+          colorTheme: 'dark',
+          autosize: false,
+          showVolume: true,
+          hideDateRanges: false,
+          hideMarketStatus: false,
+          scalePosition: 'right',
+          scaleMode: 'Normal',
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
+          fontSize: '12',
+          noTimeScale: false,
+          valuesTracking: '1',
+          whereToShow: 'trading-chart-container',
+          container_id: 'trading-chart-container',
+        });
 
-  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
-    if (active && payload && payload.length) {
-      const value = payload[0].value;
-      return (
-        <div className="bg-trading-card border border-trading-border p-2 rounded-lg">
-          <p className="text-sm text-foreground">{`$${typeof value === 'number' ? value.toFixed(2) : value}`}</p>
-        </div>
-      );
-    }
-    return null;
-  };
+        onChartLoad?.();
+      } else {
+        console.error('TradingView library not loaded');
+        toast.error("Chart failed to load. Please refresh the page.");
+      }
+    };
+
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'https://s3.tradingview.com/tv.js';
+    script.async = true;
+    script.onload = loadTradingViewWidget;
+    script.onerror = () => {
+      console.error('Failed to load TradingView script');
+      toast.error("Failed to load chart. Please check your internet connection.");
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      if (window.tvWidget) {
+        window.tvWidget.remove();
+      }
+      document.head.removeChild(script);
+    };
+  }, [symbol, onChartLoad]);
 
   return (
     <div ref={containerRef} id="trading-chart-container" className="relative w-full h-[500px] rounded-lg overflow-hidden bg-trading-card border border-trading-border">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-          <XAxis 
-            dataKey="time" 
-            stroke="#9CA3AF"
-            fontSize={12}
-          />
-          <YAxis 
-            stroke="#9CA3AF"
-            fontSize={12}
-            domain={['auto', 'auto']}
-            tickFormatter={(value: number) => `$${value.toFixed(2)}`}
-          />
-          <Tooltip content={CustomTooltip} />
-          <Bar 
-            dataKey="price" 
-            fill="#9b87f5"
-            radius={[4, 4, 0, 0]}
-          />
-        </BarChart>
-      </ResponsiveContainer>
+      <AnimatePresence>
+        {!window.tvWidget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 flex items-center justify-center bg-trading-card"
+          >
+            <Loader2 className="w-8 h-8 animate-spin text-trading-accent" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
