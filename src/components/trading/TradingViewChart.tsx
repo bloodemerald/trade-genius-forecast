@@ -1,138 +1,76 @@
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 interface TradingViewChartProps {
   symbol: string;
   onChartLoad?: () => void;
+  data?: { time: string; price: number }[];
 }
 
-export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps) => {
+export const TradingViewChart = ({ symbol, onChartLoad, data = [] }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
-  const containerId = 'trading-chart-container';
-
+  
   useEffect(() => {
-    let isMounted = true;
+    if (containerRef.current) {
+      onChartLoad?.();
+    }
+  }, [onChartLoad]);
 
-    const initializeWidget = () => {
-      if (!containerRef.current) return;
-
-      try {
-        const container = document.getElementById(containerId);
-        if (container && 'TradingView' in window) {
-          container.innerHTML = `
-            <div class="tradingview-widget-container">
-              <div id="tradingview_${containerId}"></div>
-            </div>
-          `;
-
-          const tv = (window as any).TradingView;
-          new tv.MediumWidget({
-            symbols: [[symbol === "SOL/USD" ? "COINBASE:SOLUSD" : symbol]],
-            chartOnly: false,
-            width: "100%",
-            height: "100%",
-            locale: "en",
-            colorTheme: "dark",
-            autosize: true,
-            showVolume: true,
-            hideDateRanges: false,
-            hideMarketStatus: true,
-            scalePosition: "right",
-            scaleMode: "Normal",
-            fontFamily: "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
-            fontSize: "10",
-            noTimeScale: false,
-            valuesTracking: "1",
-            whereToShow: `tradingview_${containerId}`,
-            container_id: `tradingview_${containerId}`,
-          });
-
-          if (isMounted) {
-            setLoading(false);
-            onChartLoad?.();
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing TradingView widget:', error);
-        toast.error('Failed to initialize chart');
-        setLoading(false);
-      }
-    };
-
-    const loadTradingViewScript = () => {
-      return new Promise<void>((resolve, reject) => {
-        if ('TradingView' in window) {
-          resolve();
-          return;
-        }
-
-        const script = document.createElement('script');
-        script.src = "https://s3.tradingview.com/tv.js";
-        script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error('Failed to load TradingView script'));
-        document.head.appendChild(script);
-      });
-    };
-
-    const initialize = async () => {
-      try {
-        await loadTradingViewScript();
-        if (isMounted) {
-          // Add a small delay to ensure TradingView is fully loaded
-          setTimeout(initializeWidget, 100);
-        }
-      } catch (error) {
-        console.error('Error loading TradingView:', error);
-        toast.error('Failed to load trading chart');
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    initialize();
-
-    return () => {
-      isMounted = false;
-      const container = document.getElementById(containerId);
-      if (container) {
-        container.innerHTML = '';
-      }
-    };
-  }, [symbol, onChartLoad]);
+  const chartData = data.length > 0 ? data : [
+    { time: '9:30', price: 101.25 },
+    { time: '10:00', price: 102.30 },
+    { time: '10:30', price: 100.80 },
+    { time: '11:00', price: 101.50 },
+    { time: '11:30', price: 101.25 }
+  ];
 
   return (
-    <div className="relative w-full h-[500px] rounded-lg overflow-hidden">
-      <AnimatePresence mode="wait">
-        {loading && (
-          <motion.div 
-            key="loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-trading-card border border-trading-border rounded-lg flex items-center justify-center z-10"
-          >
-            <motion.div 
-              className="flex items-center gap-2"
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Loading chart...</span>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <div
-        id={containerId}
-        ref={containerRef}
-        className="absolute inset-0 w-full h-full bg-trading-card"
-      />
+    <div id="trading-chart-container" className="relative w-full h-[500px] rounded-lg overflow-hidden bg-trading-card border border-trading-border">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+          <XAxis 
+            dataKey="time" 
+            stroke="#9CA3AF"
+            fontSize={12}
+          />
+          <YAxis 
+            stroke="#9CA3AF"
+            fontSize={12}
+            domain={['auto', 'auto']}
+            tickFormatter={(value) => `$${value.toFixed(2)}`}
+          />
+          <Tooltip
+            content={({ active, payload }) => {
+              if (active && payload && payload.length) {
+                return (
+                  <div className="bg-trading-card border border-trading-border p-2 rounded-lg">
+                    <p className="text-sm text-foreground">{`$${payload[0].value.toFixed(2)}`}</p>
+                  </div>
+                );
+              }
+              return null;
+            }}
+          />
+          <Bar 
+            dataKey="price" 
+            fill="#9b87f5"
+            radius={[4, 4, 0, 0]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 };

@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeProvider } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +48,42 @@ const Index = () => {
     confidence: 0
   });
   const { toast } = useToast();
+
+  useEffect(() => {
+    const autoAnalyze = async () => {
+      setLoading(true);
+      try {
+        const { data: aiData, error } = await supabase.functions.invoke('ai-trading-analysis', {
+          body: {
+            marketData: {
+              symbol: initialData.symbol,
+              price: initialData.price,
+              volume: initialData.volume,
+              indicators: initialData.indicators,
+              priceChange: calculateChange(initialData.price[3], initialData.price[0])
+            }
+          }
+        });
+
+        if (error) throw error;
+        
+        setAIResponse(aiData);
+        setData(initialData); // Ensure initial data is set
+        setChartLoaded(true);
+      } catch (error) {
+        console.error('Error in auto-analysis:', error);
+        toast({
+          title: "Auto-analysis failed",
+          description: "Using default market data",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    autoAnalyze();
+  }, []);
 
   const calculateScenarios = (currentPrice: number) => {
     if (!currentPrice || isNaN(currentPrice)) {
@@ -153,6 +188,11 @@ const Index = () => {
     }));
   };
 
+  const chartData = data.price.map((price, index) => ({
+    time: ['9:30', '10:00', '10:30', '11:00'][index],
+    price
+  }));
+
   return (
     <ThemeProvider attribute="class" defaultTheme="dark">
       <motion.div 
@@ -187,7 +227,11 @@ const Index = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <TradingViewChart symbol={data.symbol} onChartLoad={handleChartLoad} />
+            <TradingViewChart 
+              symbol={data.symbol} 
+              onChartLoad={handleChartLoad}
+              data={chartData}
+            />
           </motion.div>
 
           {chartLoaded && (
