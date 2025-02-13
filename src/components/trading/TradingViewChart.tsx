@@ -82,23 +82,8 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
       }
     };
 
-    // Cleanup existing script if any
-    const cleanupScript = () => {
-      if (scriptRef.current) {
-        const script = scriptRef.current;
-        if (document.head.contains(script)) {
-          document.head.removeChild(script);
-        }
-        scriptRef.current = null;
-      }
-    };
-
-    // Clean up before creating new script
-    cleanupScript();
-
     // Create and load new script
     const script = document.createElement('script');
-    scriptRef.current = script;
     script.type = 'text/javascript';
     script.src = 'https://s3.tradingview.com/tv.js';
     script.async = true;
@@ -110,11 +95,14 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
       }
     };
 
+    // Store reference to script before appending
+    scriptRef.current = script;
     document.head.appendChild(script);
 
     // Cleanup function
     return () => {
       try {
+        // Clean up widget first
         if (window.tvWidget) {
           try {
             window.tvWidget.remove();
@@ -123,7 +111,13 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
           }
           window.tvWidget = null;
         }
-        cleanupScript();
+        
+        // Clean up script if it exists and is still in the document
+        const currentScript = scriptRef.current;
+        if (currentScript && document.head.contains(currentScript)) {
+          document.head.removeChild(currentScript);
+        }
+        scriptRef.current = null;
       } catch (error) {
         console.error('Error during cleanup:', error);
       }
