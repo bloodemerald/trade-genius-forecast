@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,18 +18,20 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [pairAddress, setPairAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
 
   useEffect(() => {
     let widget: any = null;
     const fetchPairData = async () => {
+      if (!scriptLoaded) return;
+      
       try {
         setLoading(true);
         // For Coinbase pairs, directly use COINBASE:SOLUSD format
         if (symbol === "SOL/USD") {
           if (containerRef.current) {
             widget = new window.TradingView.widget({
-              width: '100%',
-              height: 500,
+              autosize: true,
               symbol: "COINBASE:SOLUSD",
               interval: 'D',
               timezone: 'Etc/UTC',
@@ -47,7 +50,6 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
                 'MASimple@tv-basicstudies',
                 'MACD@tv-basicstudies'
               ],
-              // Add onChartReady callback
               onChartReady: () => {
                 window.tvWidget = widget;
                 setLoading(false);
@@ -67,8 +69,7 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
           
           if (containerRef.current) {
             widget = new window.TradingView.widget({
-              width: '100%',
-              height: 500,
+              autosize: true,
               symbol: `${pair.baseToken.symbol}${pair.quoteToken.symbol}`,
               interval: 'D',
               timezone: 'Etc/UTC',
@@ -87,7 +88,6 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
                 'MASimple@tv-basicstudies',
                 'MACD@tv-basicstudies'
               ],
-              // Add onChartReady callback
               onChartReady: () => {
                 window.tvWidget = widget;
                 setLoading(false);
@@ -101,29 +101,29 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
       }
     };
 
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/tv.js';
-    script.async = true;
-    script.onload = () => {
-      if (symbol) {
+    // Load TradingView script
+    if (!window.TradingView) {
+      const script = document.createElement('script');
+      script.src = 'https://s3.tradingview.com/tv.js';
+      script.async = true;
+      script.onload = () => {
+        setScriptLoaded(true);
         fetchPairData();
-      }
-    };
-    document.head.appendChild(script);
+      };
+      document.head.appendChild(script);
+    } else {
+      setScriptLoaded(true);
+      fetchPairData();
+    }
 
     return () => {
-      // Cleanup
       if (window.tvWidget) {
         window.tvWidget.remove();
         window.tvWidget = null;
       }
-      const scriptElement = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
-      if (scriptElement) {
-        scriptElement.remove();
-      }
       setLoading(true);
     };
-  }, [symbol]);
+  }, [symbol, scriptLoaded]);
 
   return (
     <AnimatePresence mode="wait">
