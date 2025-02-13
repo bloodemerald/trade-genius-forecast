@@ -24,68 +24,43 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
   useEffect(() => {
     let isMounted = true;
 
-    const loadTradingViewScript = () => {
-      return new Promise<void>((resolve, reject) => {
-        if (window.TradingView) {
-          resolve();
-          return;
-        }
-
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'https://s3.tradingview.com/tv.js';
-        script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error('Failed to load TradingView script'));
-        document.head.appendChild(script);
-      });
-    };
-
     const initializeWidget = () => {
-      if (!window.TradingView || !containerRef.current) return;
+      if (!containerRef.current) return;
 
       try {
-        const widgetOptions = {
-          autosize: true,
-          symbol: symbol === "SOL/USD" ? "COINBASE:SOLUSD" : symbol,
-          interval: 'D',
-          timezone: 'Etc/UTC',
-          theme: 'dark',
-          style: '1',
-          locale: 'en',
-          toolbar_bg: '#1A1F2C',
-          enable_publishing: false,
-          hide_side_toolbar: false,
-          allow_symbol_change: true,
-          container_id: containerId,
-          library_path: '/charting_library/',
-          studies: [
-            'RSI@tv-basicstudies',
-            'MASimple@tv-basicstudies',
-            'MACD@tv-basicstudies'
-          ],
-          disabled_features: ["use_localstorage_for_settings"],
-          enabled_features: ["study_templates"],
-          overrides: {
-            "mainSeriesProperties.style": 1,
-            "symbolWatermarkProperties.color": "rgba(0, 0, 0, 0)",
-            "paneProperties.background": "#1A1F2C",
-            "paneProperties.gridProperties.color": "rgba(155, 135, 245, 0.2)"
-          },
-          custom_css_url: '/chart.css',
-          onChartReady: () => {
-            if (isMounted) {
-              setLoading(false);
-              onChartLoad?.();
-            }
-          }
-        };
-
         const container = document.getElementById(containerId);
         if (container) {
-          container.innerHTML = '';
-          const widget = new window.TradingView.widget(widgetOptions);
-          window.tvWidget = widget;
+          container.innerHTML = `
+            <div class="tradingview-widget-container">
+              <div id="tradingview_${containerId}"></div>
+            </div>
+          `;
+
+          new TradingView.MediumWidget({
+            symbols: [[symbol === "SOL/USD" ? "COINBASE:SOLUSD" : symbol]],
+            chartOnly: false,
+            width: "100%",
+            height: "100%",
+            locale: "en",
+            colorTheme: "dark",
+            autosize: true,
+            showVolume: true,
+            hideDateRanges: false,
+            hideMarketStatus: true,
+            scalePosition: "right",
+            scaleMode: "Normal",
+            fontFamily: "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
+            fontSize: "10",
+            noTimeScale: false,
+            valuesTracking: "1",
+            whereToShow: `tradingview_${containerId}`,
+            container_id: `tradingview_${containerId}`,
+          });
+
+          if (isMounted) {
+            setLoading(false);
+            onChartLoad?.();
+          }
         }
       } catch (error) {
         console.error('Error initializing TradingView widget:', error);
@@ -94,11 +69,28 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
       }
     };
 
+    const loadTradingViewScript = () => {
+      return new Promise<void>((resolve, reject) => {
+        if (window.TradingView) {
+          resolve();
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = "https://s3.tradingview.com/tv.js";
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load TradingView script'));
+        document.head.appendChild(script);
+      });
+    };
+
     const initialize = async () => {
       try {
         await loadTradingViewScript();
         if (isMounted) {
-          initializeWidget();
+          // Add a small delay to ensure TradingView is fully loaded
+          setTimeout(initializeWidget, 100);
         }
       } catch (error) {
         console.error('Error loading TradingView:', error);
@@ -113,13 +105,9 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
 
     return () => {
       isMounted = false;
-      if (window.tvWidget) {
-        try {
-          window.tvWidget.remove();
-          window.tvWidget = null;
-        } catch (error) {
-          console.error('Error cleaning up widget:', error);
-        }
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.innerHTML = '';
       }
     };
   }, [symbol, onChartLoad]);
@@ -149,7 +137,7 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
       <div
         id={containerId}
         ref={containerRef}
-        className="absolute inset-0 w-full h-full"
+        className="absolute inset-0 w-full h-full bg-trading-card"
       />
     </div>
   );
