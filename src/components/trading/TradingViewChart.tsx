@@ -17,92 +17,12 @@ declare global {
 
 export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [pairAddress, setPairAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const containerId = `tradingview_${symbol.toLowerCase().replace('/', '_')}`;
+  const containerId = `tradingview_${Math.random().toString(36).substring(7)}`;
 
   useEffect(() => {
     let widget: any = null;
-    const fetchPairData = async () => {
-      try {
-        if (!containerRef.current) {
-          console.error('Container ref is not available');
-          return;
-        }
-
-        // For Coinbase pairs, directly use COINBASE:SOLUSD format
-        if (symbol === "SOL/USD") {
-          widget = new window.TradingView.widget({
-            autosize: true,
-            symbol: "COINBASE:SOLUSD",
-            interval: 'D',
-            timezone: 'Etc/UTC',
-            theme: 'dark',
-            style: '1',
-            locale: 'en',
-            toolbar_bg: '#1A1F2C',
-            enable_publishing: false,
-            hide_side_toolbar: false,
-            allow_symbol_change: true,
-            container_id: containerId,
-            backgroundColor: '#1A1F2C',
-            gridColor: 'rgba(155, 135, 245, 0.2)',
-            studies: [
-              'RSI@tv-basicstudies',
-              'MASimple@tv-basicstudies',
-              'MACD@tv-basicstudies'
-            ],
-            onChartReady: () => {
-              window.tvWidget = widget;
-              setLoading(false);
-            }
-          });
-          return;
-        }
-
-        // For other pairs, use DexScreener API
-        const response = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${symbol}`);
-        const data = await response.json();
-        
-        if (data.pairs && data.pairs.length > 0) {
-          const pair = data.pairs[0];
-          setPairAddress(pair.pairAddress);
-          
-          widget = new window.TradingView.widget({
-            autosize: true,
-            symbol: `${pair.baseToken.symbol}${pair.quoteToken.symbol}`,
-            interval: 'D',
-            timezone: 'Etc/UTC',
-            theme: 'dark',
-            style: '1',
-            locale: 'en',
-            toolbar_bg: '#1A1F2C',
-            enable_publishing: false,
-            hide_side_toolbar: false,
-            allow_symbol_change: true,
-            container_id: containerId,
-            backgroundColor: '#1A1F2C',
-            gridColor: 'rgba(155, 135, 245, 0.2)',
-            studies: [
-              'RSI@tv-basicstudies',
-              'MASimple@tv-basicstudies',
-              'MACD@tv-basicstudies'
-            ],
-            onChartReady: () => {
-              window.tvWidget = widget;
-              setLoading(false);
-            }
-          });
-        } else {
-          toast.error('No trading pair found');
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error fetching pair data:', error);
-        toast.error('Failed to load trading chart');
-        setLoading(false);
-      }
-    };
+    let isMounted = true;
 
     const loadTradingViewScript = () => {
       return new Promise<void>((resolve, reject) => {
@@ -112,74 +32,120 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
         }
 
         const script = document.createElement('script');
+        script.type = 'text/javascript';
         script.src = 'https://s3.tradingview.com/tv.js';
         script.async = true;
         script.onload = () => resolve();
-        script.onerror = () => {
-          reject(new Error('Failed to load TradingView script'));
-          toast.error('Failed to load TradingView script');
-          setLoading(false);
-        };
+        script.onerror = () => reject(new Error('Failed to load TradingView script'));
         document.head.appendChild(script);
       });
     };
 
-    const initializeChart = async () => {
+    const initializeWidget = () => {
+      if (!window.TradingView || !containerRef.current) return;
+
+      const config = {
+        autosize: true,
+        symbol: symbol === "SOL/USD" ? "COINBASE:SOLUSD" : symbol,
+        interval: 'D',
+        timezone: 'Etc/UTC',
+        theme: 'dark',
+        style: '1',
+        locale: 'en',
+        toolbar_bg: '#1A1F2C',
+        enable_publishing: false,
+        hide_side_toolbar: false,
+        allow_symbol_change: true,
+        container_id: containerId,
+        library_path: '/charting_library/',
+        backgroundColor: '#1A1F2C',
+        gridColor: 'rgba(155, 135, 245, 0.2)',
+        studies: [
+          'RSI@tv-basicstudies',
+          'MASimple@tv-basicstudies',
+          'MACD@tv-basicstudies'
+        ],
+        disabled_features: ["use_localstorage_for_settings"],
+        enabled_features: ["study_templates"],
+        overrides: {
+          "mainSeriesProperties.style": 1,
+          "symbolWatermarkProperties.color": "rgba(0, 0, 0, 0)"
+        },
+        onChartReady: () => {
+          if (isMounted) {
+            setLoading(false);
+          }
+        }
+      };
+
       try {
-        await loadTradingViewScript();
-        await fetchPairData();
+        widget = new window.TradingView.widget(config);
+        window.tvWidget = widget;
       } catch (error) {
-        console.error('Error initializing chart:', error);
+        console.error('Error initializing TradingView widget:', error);
         toast.error('Failed to initialize chart');
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    initializeChart();
+    const initialize = async () => {
+      try {
+        await loadTradingViewScript();
+        // Small delay to ensure DOM is ready
+        setTimeout(initializeWidget, 100);
+      } catch (error) {
+        console.error('Error loading TradingView:', error);
+        toast.error('Failed to load trading chart');
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    initialize();
 
     return () => {
-      if (window.tvWidget) {
-        window.tvWidget.remove();
-        window.tvWidget = null;
+      isMounted = false;
+      if (widget) {
+        try {
+          widget.remove();
+          window.tvWidget = null;
+        } catch (error) {
+          console.error('Error cleaning up widget:', error);
+        }
       }
     };
   }, [symbol, containerId]);
 
   return (
-    <AnimatePresence mode="wait">
-      {loading ? (
-        <motion.div 
-          key="loading"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="w-full h-[500px] bg-trading-card border border-trading-border rounded-lg flex items-center justify-center"
-        >
+    <div className="relative w-full h-[500px]">
+      <AnimatePresence mode="wait">
+        {loading ? (
           <motion.div 
-            className="flex items-center gap-2"
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-trading-card border border-trading-border rounded-lg flex items-center justify-center z-10"
           >
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span>Loading chart...</span>
+            <motion.div 
+              className="flex items-center gap-2"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Loading chart...</span>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      ) : (
-        <motion.div
-          key="chart"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="w-full h-[500px] bg-trading-card border border-trading-border rounded-lg overflow-hidden"
-        >
-          <div
-            id={containerId}
-            ref={containerRef}
-            className="w-full h-full"
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
+        ) : null}
+      </AnimatePresence>
+      <div
+        id={containerId}
+        ref={containerRef}
+        className="absolute inset-0 w-full h-full rounded-lg overflow-hidden"
+      />
+    </div>
   );
 };
