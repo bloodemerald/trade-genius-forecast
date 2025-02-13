@@ -18,11 +18,13 @@ declare global {
 export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
-  const containerId = `tradingview_${Math.random().toString(36).substring(7)}`;
+  const containerId = 'trading-chart-container'; // Fixed ID for capture
 
   useEffect(() => {
     let widget: any = null;
     let isMounted = true;
+    let retryCount = 0;
+    const maxRetries = 3;
 
     const loadTradingViewScript = () => {
       return new Promise<void>((resolve, reject) => {
@@ -42,7 +44,16 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
     };
 
     const initializeWidget = () => {
-      if (!window.TradingView || !containerRef.current) return;
+      if (!window.TradingView || !containerRef.current) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(initializeWidget, 500);
+          return;
+        }
+        setLoading(false);
+        toast.error('Failed to initialize chart after multiple attempts');
+        return;
+      }
 
       const config = {
         autosize: true,
@@ -93,8 +104,7 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
     const initialize = async () => {
       try {
         await loadTradingViewScript();
-        // Small delay to ensure DOM is ready
-        setTimeout(initializeWidget, 100);
+        initializeWidget();
       } catch (error) {
         console.error('Error loading TradingView:', error);
         toast.error('Failed to load trading chart');
@@ -120,9 +130,9 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
   }, [symbol, containerId]);
 
   return (
-    <div className="relative w-full h-[500px]">
+    <div className="relative w-full h-[500px] rounded-lg overflow-hidden">
       <AnimatePresence mode="wait">
-        {loading ? (
+        {loading && (
           <motion.div 
             key="loading"
             initial={{ opacity: 0 }}
@@ -139,12 +149,12 @@ export const TradingViewChart = ({ symbol }: TradingViewChartProps) => {
               <span>Loading chart...</span>
             </motion.div>
           </motion.div>
-        ) : null}
+        )}
       </AnimatePresence>
       <div
         id={containerId}
         ref={containerRef}
-        className="absolute inset-0 w-full h-full rounded-lg overflow-hidden"
+        className="absolute inset-0 w-full h-full"
       />
     </div>
   );
