@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -23,18 +24,18 @@ serve(async (req) => {
 
     // Calculate initial sentiment based on RSI
     let initialSentiment = 50; // Neutral base
-    if (marketData.indicators.RSI_14 > 70) initialSentiment = 85;
-    else if (marketData.indicators.RSI_14 > 60) initialSentiment = 70;
-    else if (marketData.indicators.RSI_14 > 50) initialSentiment = 60;
-    else if (marketData.indicators.RSI_14 < 30) initialSentiment = 15;
-    else if (marketData.indicators.RSI_14 < 40) initialSentiment = 30;
-    else if (marketData.indicators.RSI_14 < 50) initialSentiment = 40;
+    if (marketData.indicators?.RSI_14 > 70) initialSentiment = 85;
+    else if (marketData.indicators?.RSI_14 > 60) initialSentiment = 70;
+    else if (marketData.indicators?.RSI_14 > 50) initialSentiment = 60;
+    else if (marketData.indicators?.RSI_14 < 30) initialSentiment = 15;
+    else if (marketData.indicators?.RSI_14 < 40) initialSentiment = 30;
+    else if (marketData.indicators?.RSI_14 < 50) initialSentiment = 40;
 
     // Calculate initial confidence based on technical indicators
     let initialConfidence = 50;
     const volumeStrength = marketData.volume > 1000000 ? 20 : marketData.volume > 500000 ? 15 : 10;
-    const trendStrength = Math.abs(marketData.indicators.MACD[0]) > 0.001 ? 20 : 10;
-    const rsiStrength = (marketData.indicators.RSI_14 > 70 || marketData.indicators.RSI_14 < 30) ? 20 : 10;
+    const trendStrength = Math.abs(marketData.indicators?.MACD?.[0] ?? 0) > 0.001 ? 20 : 10;
+    const rsiStrength = (marketData.indicators?.RSI_14 > 70 || marketData.indicators?.RSI_14 < 30) ? 20 : 10;
     initialConfidence = Math.min(95, volumeStrength + trendStrength + rsiStrength);
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
@@ -49,12 +50,12 @@ serve(async (req) => {
             text: `You are an expert cryptocurrency trading analyst. Based on this market data, provide a detailed analysis:
 
               Symbol: ${marketData.symbol}
-              Current Price: ${marketData.price[3]}
+              Current Price: ${marketData.price?.[3] ?? 'N/A'}
               Price Change: ${marketData.priceChange}%
               24h Volume: ${marketData.volume}
               Technical Indicators:
-              - RSI(14): ${marketData.indicators.RSI_14}
-              - MACD: ${marketData.indicators.MACD.join(', ')}
+              - RSI(14): ${marketData.indicators?.RSI_14 ?? 'N/A'}
+              - MACD: ${marketData.indicators?.MACD?.join(', ') ?? 'N/A'}
               
               Initial Technical Analysis:
               - Market Sentiment Score: ${initialSentiment}

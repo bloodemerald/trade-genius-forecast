@@ -9,6 +9,15 @@ interface TradingViewChartProps {
   onChartLoad?: () => void;
 }
 
+declare global {
+  interface Window {
+    TradingView?: {
+      MediumWidget: new (config: any) => { remove: () => void };
+    };
+    tvWidget?: { remove: () => void } | null;
+  }
+}
+
 export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const scriptRef = useRef<HTMLScriptElement | null>(null);
@@ -24,10 +33,14 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
     const loadTradingViewWidget = () => {
       if (!isMounted.current) return;
       
-      if (typeof window.TradingView !== 'undefined' && containerRef.current) {
-        try {
+      try {
+        if (window.TradingView && containerRef.current) {
           if (window.tvWidget) {
-            window.tvWidget.remove();
+            try {
+              window.tvWidget.remove();
+            } catch (e) {
+              console.error('Error removing existing widget:', e);
+            }
             window.tvWidget = null;
           }
 
@@ -55,25 +68,33 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
           if (isMounted.current) {
             onChartLoad?.();
           }
-        } catch (error) {
-          console.error('Error initializing TradingView widget:', error);
+        } else {
+          console.error('TradingView library not loaded');
           if (isMounted.current) {
-            toast.error("Failed to initialize chart. Please refresh the page.");
+            toast.error("Chart failed to load. Please refresh the page.");
           }
         }
-      } else {
-        console.error('TradingView library not loaded');
+      } catch (error) {
+        console.error('Error initializing TradingView widget:', error);
         if (isMounted.current) {
-          toast.error("Chart failed to load. Please refresh the page.");
+          toast.error("Failed to initialize chart. Please refresh the page.");
         }
       }
     };
 
-    // Remove existing script if any
-    if (scriptRef.current && scriptRef.current.parentNode) {
-      scriptRef.current.parentNode.removeChild(scriptRef.current);
-      scriptRef.current = null;
-    }
+    // Cleanup existing script if any
+    const cleanupScript = () => {
+      if (scriptRef.current) {
+        const script = scriptRef.current;
+        if (document.head.contains(script)) {
+          document.head.removeChild(script);
+        }
+        scriptRef.current = null;
+      }
+    };
+
+    // Clean up before creating new script
+    cleanupScript();
 
     // Create and load new script
     const script = document.createElement('script');
@@ -95,14 +116,14 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
     return () => {
       try {
         if (window.tvWidget) {
-          window.tvWidget.remove();
+          try {
+            window.tvWidget.remove();
+          } catch (e) {
+            console.error('Error removing widget during cleanup:', e);
+          }
           window.tvWidget = null;
         }
-        
-        if (scriptRef.current && document.head.contains(scriptRef.current)) {
-          document.head.removeChild(scriptRef.current);
-        }
-        scriptRef.current = null;
+        cleanupScript();
       } catch (error) {
         console.error('Error during cleanup:', error);
       }
