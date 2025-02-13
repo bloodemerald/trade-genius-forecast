@@ -9,13 +9,6 @@ interface TradingViewChartProps {
   onChartLoad?: () => void;
 }
 
-declare global {
-  interface Window {
-    TradingView: any;
-    tvWidget: any;
-  }
-}
-
 export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
@@ -25,7 +18,7 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
     let isMounted = true;
 
     const initializeWidget = () => {
-      if (!containerRef.current) return;
+      if (!containerRef.current || !window.TradingView) return;
 
       try {
         const container = document.getElementById(containerId);
@@ -36,7 +29,7 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
             </div>
           `;
 
-          new TradingView.MediumWidget({
+          new window.TradingView.MediumWidget({
             symbols: [[symbol === "SOL/USD" ? "COINBASE:SOLUSD" : symbol]],
             chartOnly: false,
             width: "100%",
