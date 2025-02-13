@@ -18,18 +18,19 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
     let isMounted = true;
 
     const initializeWidget = () => {
-      if (!containerRef.current || !window.TradingView) return;
+      if (!containerRef.current) return;
 
       try {
         const container = document.getElementById(containerId);
-        if (container) {
+        if (container && 'TradingView' in window) {
           container.innerHTML = `
             <div class="tradingview-widget-container">
               <div id="tradingview_${containerId}"></div>
             </div>
           `;
 
-          new window.TradingView.MediumWidget({
+          const tv = (window as any).TradingView;
+          new tv.MediumWidget({
             symbols: [[symbol === "SOL/USD" ? "COINBASE:SOLUSD" : symbol]],
             chartOnly: false,
             width: "100%",
@@ -64,7 +65,7 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
 
     const loadTradingViewScript = () => {
       return new Promise<void>((resolve, reject) => {
-        if (window.TradingView) {
+        if ('TradingView' in window) {
           resolve();
           return;
         }
