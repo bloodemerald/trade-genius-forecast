@@ -20,38 +20,20 @@ declare global {
 
 export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
-  const isMounted = useRef(true);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Reset mounted state on unmount
+  const isMounted = useRef(true);
+  const widgetContainerId = `trading-chart-container-${symbol}`;
+
   useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-  
-  // Handle TradingView widget
-  useEffect(() => {
-    let scriptElement: HTMLScriptElement | null = null;
+    const script = document.createElement('script');
+    let widget: { remove: () => void } | null = null;
 
     const loadTradingViewWidget = () => {
       if (!isMounted.current) return;
       
       try {
         if (window.TradingView && containerRef.current) {
-          // Safely remove existing widget if it exists
-          if (window.tvWidget) {
-            try {
-              window.tvWidget.remove();
-            } catch (e) {
-              console.error('Error removing existing widget:', e);
-            }
-            window.tvWidget = null;
-          }
-
-          // Create new widget instance
-          window.tvWidget = new window.TradingView.MediumWidget({
+          widget = new window.TradingView.MediumWidget({
             symbols: [[symbol]],
             chartOnly: true,
             width: '100%',
@@ -68,8 +50,8 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
             fontSize: '12',
             noTimeScale: false,
             valuesTracking: '1',
-            whereToShow: 'trading-chart-container',
-            container_id: 'trading-chart-container',
+            whereToShow: widgetContainerId,
+            container_id: widgetContainerId,
           });
 
           if (isMounted.current) {
@@ -90,61 +72,58 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
       }
     };
 
-    const createScript = () => {
-      // Create new script element
-      scriptElement = document.createElement('script');
-      scriptElement.type = 'text/javascript';
-      scriptElement.src = 'https://s3.tradingview.com/tv.js';
-      scriptElement.async = true;
-      scriptElement.onload = loadTradingViewWidget;
-      scriptElement.onerror = () => {
+    const initializeWidget = () => {
+      script.type = 'text/javascript';
+      script.src = 'https://s3.tradingview.com/tv.js';
+      script.async = true;
+      script.onload = loadTradingViewWidget;
+      script.onerror = () => {
         console.error('Failed to load TradingView script');
         if (isMounted.current) {
           toast.error("Failed to load chart. Please check your internet connection.");
         }
       };
 
-      // Store reference and append to document
-      scriptRef.current = scriptElement;
-      document.head.appendChild(scriptElement);
+      document.head.appendChild(script);
     };
 
-    createScript();
+    initializeWidget();
 
     // Cleanup function
     return () => {
-      // Cleanup in reverse order of creation
-      if (isMounted.current) {
-        setIsLoading(true);
-      }
+      isMounted.current = false;
+      setIsLoading(true);
 
-      // 1. Remove widget if it exists
-      if (window.tvWidget) {
+      // Cleanup widget
+      if (widget) {
         try {
-          window.tvWidget.remove();
+          widget.remove();
         } catch (e) {
-          console.error('Error removing widget during cleanup:', e);
-        }
-        window.tvWidget = null;
-      }
-
-      // 2. Remove script element if it exists
-      if (scriptRef.current && document.head.contains(scriptRef.current)) {
-        try {
-          document.head.removeChild(scriptRef.current);
-        } catch (e) {
-          console.error('Error removing script during cleanup:', e);
+          console.error('Error removing widget:', e);
         }
       }
 
-      // 3. Clear references
-      scriptRef.current = null;
-      scriptElement = null;
+      // Remove script tag if it exists in document
+      if (script && document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+
+      // Clean up any leftover elements
+      const container = document.getElementById(widgetContainerId);
+      if (container) {
+        while (container.firstChild) {
+          container.removeChild(container.firstChild);
+        }
+      }
     };
-  }, [symbol, onChartLoad]);
+  }, [symbol, onChartLoad, widgetContainerId]);
 
   return (
-    <div ref={containerRef} id="trading-chart-container" className="relative w-full h-[500px] rounded-lg overflow-hidden bg-trading-card border border-trading-border">
+    <div 
+      ref={containerRef} 
+      id={widgetContainerId}
+      className="relative w-full h-[500px] rounded-lg overflow-hidden bg-trading-card border border-trading-border"
+    >
       <AnimatePresence>
         {isLoading && (
           <motion.div
