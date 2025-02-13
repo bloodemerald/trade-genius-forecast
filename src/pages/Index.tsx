@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeProvider } from "next-themes";
@@ -70,7 +71,7 @@ const Index = () => {
         entry: currentPrice,
         stopLoss: currentPrice * (1 - volatility * 0.5 / 100),
         takeProfit: currentPrice * (1 + volatility * 1.5 / 100),
-        confidence: 20,
+        confidence: Math.max(20, Math.min(80, 50 + trendStrength * 10 + rsiSignal * 15)),
         get riskReward() {
           return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
         },
@@ -82,7 +83,7 @@ const Index = () => {
         entry: currentPrice,
         stopLoss: currentPrice * (1 - volatility * 0.75 / 100),
         takeProfit: currentPrice * (1 + volatility * 2.25 / 100),
-        confidence: 20,
+        confidence: Math.max(20, Math.min(80, 45 + trendStrength * 8 + rsiSignal * 12)),
         get riskReward() {
           return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
         },
@@ -94,7 +95,7 @@ const Index = () => {
         entry: currentPrice,
         stopLoss: currentPrice * (1 - volatility / 100),
         takeProfit: currentPrice * (1 + volatility * 3.375 / 100),
-        confidence: 20,
+        confidence: Math.max(20, Math.min(80, 40 + trendStrength * 6 + rsiSignal * 10)),
         get riskReward() {
           return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
         },
@@ -146,7 +147,10 @@ const Index = () => {
   };
 
   const handleAnalysisComplete = (newData: TradingData) => {
-    setData(newData);
+    setData(prevData => ({
+      ...newData,
+      symbol: prevData.symbol // Keep the original symbol
+    }));
   };
 
   return (
@@ -173,6 +177,7 @@ const Index = () => {
           <ImageAnalysisSection
             loading={loading}
             aiResponse={aiResponse}
+            currentData={data}
             onAnalysisComplete={handleAnalysisComplete}
             onGetAISuggestion={getAISuggestion}
           />
