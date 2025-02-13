@@ -230,7 +230,6 @@ const Index = () => {
             <TradingViewChart 
               symbol={data.symbol} 
               onChartLoad={handleChartLoad}
-              data={chartData}
             />
           </motion.div>
 
