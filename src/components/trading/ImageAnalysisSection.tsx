@@ -41,36 +41,39 @@ export const ImageAnalysisSection = ({
     }
   }, [aiResponse.suggestion]);
 
-  const calculateScenarios = (price: number) => {
-    const volatility = 0.02; // 2% base volatility
-    const baseRR = 2.5; // Base risk-reward ratio
+  const calculateScenarios = (price: number, sentiment: number, confidence: number) => {
+    const volatility = Math.abs((currentData.price[currentData.price.length - 1] - currentData.price[0]) / currentData.price[0]);
+    const baseRR = sentiment > 0 ? 2.5 : 2.0;
+    const direction = sentiment > 0 ? 1 : -1;
     
-    return [
+    const scenarios = [
       {
         entry: price,
-        stopLoss: price * (1 - volatility),
-        takeProfit: price * (1 + (volatility * baseRR)),
+        stopLoss: price * (1 - (volatility * 0.02 * direction)),
+        takeProfit: price * (1 + (volatility * 0.05 * direction)),
         riskReward: baseRR,
-        potential: (price * (1 + (volatility * baseRR)) - price) / price * 100,
-        confidence: Math.min(85, aiResponse.confidence + 10)
+        potential: ((price * (1 + (volatility * 0.05 * direction))) - price) / price * 100,
+        confidence: Math.min(85, confidence + 10)
       },
       {
         entry: price,
-        stopLoss: price * (1 - (volatility * 1.5)),
-        takeProfit: price * (1 + (volatility * baseRR * 1.5)),
+        stopLoss: price * (1 - (volatility * 0.025 * direction)),
+        takeProfit: price * (1 + (volatility * 0.0625 * direction)),
         riskReward: baseRR * 1.2,
-        potential: (price * (1 + (volatility * baseRR * 1.5)) - price) / price * 100,
-        confidence: Math.min(75, aiResponse.confidence)
+        potential: ((price * (1 + (volatility * 0.0625 * direction))) - price) / price * 100,
+        confidence: Math.min(75, confidence)
       },
       {
         entry: price,
-        stopLoss: price * (1 - (volatility * 2)),
-        takeProfit: price * (1 + (volatility * baseRR * 2)),
+        stopLoss: price * (1 - (volatility * 0.03 * direction)),
+        takeProfit: price * (1 + (volatility * 0.075 * direction)),
         riskReward: baseRR * 1.5,
-        potential: (price * (1 + (volatility * baseRR * 2)) - price) / price * 100,
-        confidence: Math.max(40, aiResponse.confidence - 10)
+        potential: ((price * (1 + (volatility * 0.075 * direction))) - price) / price * 100,
+        confidence: Math.max(40, confidence - 10)
       }
     ];
+
+    return scenarios;
   };
 
   const captureChart = useCallback(async () => {
@@ -110,33 +113,33 @@ export const ImageAnalysisSection = ({
         if (reader.result) {
           try {
             const currentPrice = currentData.price[currentData.price.length - 1];
-            const scenarios = calculateScenarios(currentPrice);
+            const scenarios = calculateScenarios(
+              currentPrice,
+              aiResponse.sentiment,
+              aiResponse.confidence
+            );
             
+            // Get chart analysis from AI response
+            const observations = aiResponse.suggestion.match(/Support.*?(?=\.)/g) || [];
+            const signals = aiResponse.suggestion.match(/Technical.*?(?=\.)/g) || [];
+            const actions = aiResponse.suggestion.match(/Price.*?(?=\.)/g) || [];
+
             const updatedData: TradingData = {
               ...currentData,
-              price: currentData.price,
-              volume: currentData.volume,
-              indicators: {
-                ...currentData.indicators,
-                EMA_9: currentData.indicators.EMA_9,
-                MA_10: currentData.indicators.MA_10,
-                MACD: currentData.indicators.MACD,
-                RSI_14: currentData.indicators.RSI_14
-              },
-              chartObservations: [
-                "Support and resistance levels identified",
-                "Price action patterns analyzed",
+              chartObservations: observations.length > 0 ? observations : [
+                "Support and resistance levels analyzed",
+                "Chart patterns identified",
                 "Market structure evaluated"
               ],
-              tradeSignals: [
+              tradeSignals: signals.length > 0 ? signals : [
                 "Technical indicators assessed",
-                "Volume profile examined",
-                "Trend direction confirmed"
+                "Volume analysis completed",
+                "Trend direction identified"
               ],
-              priceAction: [
+              priceAction: actions.length > 0 ? actions : [
                 "Price structure analyzed",
                 "Key levels mapped",
-                "Market context evaluated"
+                "Market dynamics evaluated"
               ]
             };
 
@@ -158,7 +161,7 @@ export const ImageAnalysisSection = ({
       toast.error("Failed to analyze chart. Please make sure the chart is fully loaded.");
       setLocalLoading(false);
     }
-  }, [currentData, onAnalysisComplete, onGetAISuggestion, aiResponse.confidence]);
+  }, [currentData, onAnalysisComplete, onGetAISuggestion, aiResponse]);
 
   const isLoading = localLoading || externalLoading;
 
