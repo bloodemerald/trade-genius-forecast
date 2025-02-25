@@ -1,3 +1,4 @@
+
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,17 +29,30 @@ export const ImageAnalysisSection = ({
 }: ImageAnalysisSectionProps) => {
   const captureChart = async () => {
     try {
-      const chartElement = document.querySelector('#trading-chart-container') as HTMLElement;
+      // Try multiple possible selectors for the chart
+      const chartElement = document.querySelector('#tradingview_widget') || 
+                          document.querySelector('.trading-chart-container') ||
+                          document.querySelector('.tradingview-widget-container');
+                          
       if (!chartElement) {
-        toast.error("Chart not found. Please wait for it to load.");
+        toast.error("Chart not found. Please wait for it to load fully.");
         return;
       }
 
       // Show loading state
       toast.info("Analyzing chart...");
 
+      // Use a small delay to ensure chart is fully rendered
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Capture the chart image
-      const canvas = await html2canvas(chartElement);
+      const canvas = await html2canvas(chartElement, {
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null
+      });
+      
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
       
       // Process the captured image
@@ -54,8 +68,8 @@ export const ImageAnalysisSection = ({
             // Keep the current symbol and update the rest of the data
             const updatedData: TradingData = {
               ...currentData,
-              price: currentData.price, // Keep current price data
-              volume: currentData.volume, // Keep current volume
+              price: currentData.price,
+              volume: currentData.volume,
               indicators: {
                 ...currentData.indicators,
                 EMA_9: currentData.indicators.EMA_9,
@@ -96,7 +110,7 @@ export const ImageAnalysisSection = ({
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('Error capturing chart:', error);
-      toast.error("Failed to analyze chart. Please try again.");
+      toast.error("Failed to analyze chart. Please make sure the chart is fully loaded.");
     }
   };
 
