@@ -1,3 +1,4 @@
+
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PotentialGainProps {
@@ -14,7 +15,7 @@ export const PotentialGain = ({ potential }: PotentialGainProps) => {
           
           <div className="flex items-center justify-between">
             <span className="text-sm text-[#D6BCFA]/70">Potential Gain</span>
-            <span className="text-lg font-semibold text-profit bg-profit/10 px-3 py-1 rounded-full">
+            <span className="text-2xl font-bold text-profit bg-profit/10 px-4 py-2 rounded-lg border border-profit/20 shadow-sm shadow-profit/5">
               {potential.toFixed(2)}%
             </span>
           </div>

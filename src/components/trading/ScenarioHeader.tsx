@@ -1,3 +1,4 @@
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,10 +11,8 @@ interface ScenarioHeaderProps {
 
 export const ScenarioHeader = ({ index, riskReward, confidence }: ScenarioHeaderProps) => {
   const handleRRClick = () => {
-    // Get TradingView widget instance
     const widget = (window as any).tvWidget;
     if (widget) {
-      // Create long position template
       widget.chart().createPositionLine()
         .setText("Long Position")
         .setQuantity(`R/R: ${riskReward.toFixed(2)}`)
@@ -38,7 +37,7 @@ export const ScenarioHeader = ({ index, riskReward, confidence }: ScenarioHeader
       <div className="flex items-center gap-2">
         <Tooltip>
           <TooltipTrigger>
-            <h3 className="text-lg font-semibold text-[#D6BCFA] group-hover:text-white transition-colors">
+            <h3 className="text-lg font-semibold text-[#9b87f5] group-hover:text-[#D6BCFA] transition-colors">
               Scenario {index + 1}
             </h3>
           </TooltipTrigger>
@@ -54,7 +53,7 @@ export const ScenarioHeader = ({ index, riskReward, confidence }: ScenarioHeader
             <Button
               onClick={handleRRClick}
               variant="ghost"
-              className="text-sm font-medium text-[#9b87f5] bg-[#1A1F2C] px-3 py-1 rounded-full border border-[#9b87f5]/30 hover:bg-[#1A1F2C]/80"
+              className="text-sm font-medium text-[#9b87f5] bg-[#1A1F2C]/80 px-3 py-1 rounded-full border border-[#9b87f5]/30 hover:bg-[#1A1F2C] hover:border-[#9b87f5]/50"
             >
               R/R: {riskReward.toFixed(2)}
             </Button>
