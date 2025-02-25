@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { TradingData, AIResponse } from "@/types/trading";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -27,6 +28,18 @@ export const ImageAnalysisSection = ({
   onAnalysisComplete,
   onGetAISuggestion
 }: ImageAnalysisSectionProps) => {
+  const [showAnalysis, setShowAnalysis] = useState(false);
+
+  useEffect(() => {
+    if (aiResponse.suggestion) {
+      setShowAnalysis(true);
+      const timer = setTimeout(() => {
+        setShowAnalysis(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [aiResponse.suggestion]);
+
   const captureChart = async () => {
     try {
       // Try multiple possible selectors for the chart and cast to HTMLElement
@@ -156,13 +169,18 @@ export const ImageAnalysisSection = ({
         </Tooltip>
       </TooltipProvider>
 
-      <AnimatePresence>
-        {aiResponse.suggestion && (
+      <AnimatePresence mode="wait">
+        {showAnalysis && aiResponse.suggestion && (
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 50 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, scale: 0.8, x: 50 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.8, x: 50 }}
+            transition={{ 
+              duration: 0.3,
+              type: "spring",
+              stiffness: 200,
+              damping: 20
+            }}
             className="w-full max-w-md rounded-lg bg-trading-card/90 backdrop-blur-sm border border-trading-border p-4"
           >
             <p className="text-sm text-[#D6BCFA] leading-relaxed">{aiResponse.suggestion}</p>
