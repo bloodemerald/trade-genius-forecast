@@ -44,7 +44,7 @@ export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps)
 
         // Create new widget
         widgetRef.current = new window.TradingView.widget({
-          symbol: symbol,
+          symbol: "SOLUSD",  // Changed to SOLUSD for better compatibility
           interval: 'D',
           container_id: containerId,
           width: '100%',

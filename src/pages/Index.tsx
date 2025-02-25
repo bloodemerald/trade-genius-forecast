@@ -11,7 +11,7 @@ import { TradingViewChart } from "@/components/trading/TradingViewChart";
 import type { TradingData, AIResponse } from "@/types/trading";
 
 const initialData: TradingData = {
-  symbol: "SOL/USD",
+  symbol: "SOLUSD",
   tokenAddress: null,
   price: [98.45, 102.30, 97.80, 101.25],
   volume: 1458923,
@@ -68,7 +68,7 @@ const Index = () => {
         if (error) throw error;
         
         setAIResponse(aiData);
-        setData(initialData); // Ensure initial data is set
+        setData(initialData);
         setChartLoaded(true);
       } catch (error) {
         console.error('Error in auto-analysis:', error);
@@ -97,14 +97,21 @@ const Index = () => {
       });
     }
 
-    const volatility = Math.abs((data.price[data.price.length - 1] - data.price[0]) / data.price[0]) * 100;
+    const suggestion = aiResponse.suggestion || '';
+    const supportMatch = suggestion.match(/support at \$?(\d+\.?\d*)/i);
+    const resistanceMatch = suggestion.match(/resistance at \$?(\d+\.?\d*)/i);
+    
+    const supportLevel = supportMatch ? parseFloat(supportMatch[1]) : currentPrice * 0.98;
+    const resistanceLevel = resistanceMatch ? parseFloat(resistanceMatch[1]) : currentPrice * 1.02;
+    
+    const volatility = Math.abs((data.price[data.price.length - 1] - data.price[0]) / data.price[0]);
     const baseRR = aiResponse.sentiment > 0 ? 2.5 : 2.0;
     
     return [
       {
         entry: currentPrice,
-        stopLoss: currentPrice * (1 - (volatility * 0.02)),
-        takeProfit: currentPrice * (1 + (volatility * 0.05)),
+        stopLoss: aiResponse.sentiment > 0 ? supportLevel : resistanceLevel,
+        takeProfit: aiResponse.sentiment > 0 ? resistanceLevel : supportLevel,
         confidence: Math.min(85, aiResponse.confidence + 10),
         get riskReward() {
           return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
@@ -115,8 +122,8 @@ const Index = () => {
       },
       {
         entry: currentPrice,
-        stopLoss: currentPrice * (1 - (volatility * 0.025)),
-        takeProfit: currentPrice * (1 + (volatility * 0.0625)),
+        stopLoss: aiResponse.sentiment > 0 ? supportLevel * 0.99 : resistanceLevel * 1.01,
+        takeProfit: aiResponse.sentiment > 0 ? resistanceLevel * 1.01 : supportLevel * 0.99,
         confidence: Math.min(75, aiResponse.confidence),
         get riskReward() {
           return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
@@ -127,8 +134,8 @@ const Index = () => {
       },
       {
         entry: currentPrice,
-        stopLoss: currentPrice * (1 - (volatility * 0.03)),
-        takeProfit: currentPrice * (1 + (volatility * 0.075)),
+        stopLoss: aiResponse.sentiment > 0 ? supportLevel * 0.98 : resistanceLevel * 1.02,
+        takeProfit: aiResponse.sentiment > 0 ? resistanceLevel * 1.02 : supportLevel * 0.98,
         confidence: Math.max(40, aiResponse.confidence - 10),
         get riskReward() {
           return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
@@ -181,7 +188,7 @@ const Index = () => {
   const handleAnalysisComplete = (newData: TradingData) => {
     setData(prevData => ({
       ...newData,
-      symbol: prevData.symbol // Keep the original symbol
+      symbol: prevData.symbol
     }));
   };
 
