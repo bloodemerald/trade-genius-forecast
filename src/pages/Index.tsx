@@ -97,16 +97,19 @@ const Index = () => {
       });
     }
 
-    const volatility = Math.abs(data.price[1] - data.price[2]) / data.price[3] * 100;
-    const trendStrength = Math.abs(data.indicators.MACD[2]);
+    const priceHistory = data.price;
+    const volatility = Math.abs((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100;
+    
     const rsiSignal = data.indicators.RSI_14 > 70 ? -1 : data.indicators.RSI_14 < 30 ? 1 : 0;
     
-    const scenarios = [
+    const macdStrength = Math.abs(data.indicators.MACD[0]);
+    
+    return [
       {
         entry: currentPrice,
-        stopLoss: currentPrice * (1 - volatility * 0.5 / 100),
-        takeProfit: currentPrice * (1 + volatility * 1.5 / 100),
-        confidence: Math.max(20, Math.min(80, 50 + trendStrength * 10 + rsiSignal * 15)),
+        stopLoss: currentPrice * (1 - (volatility * 0.02)),
+        takeProfit: currentPrice * (1 + (volatility * 0.06)),
+        confidence: Math.min(48, 40 + (rsiSignal * 5) + (macdStrength * 2)),
         get riskReward() {
           return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
         },
@@ -116,9 +119,9 @@ const Index = () => {
       },
       {
         entry: currentPrice,
-        stopLoss: currentPrice * (1 - volatility * 0.75 / 100),
-        takeProfit: currentPrice * (1 + volatility * 2.25 / 100),
-        confidence: Math.max(20, Math.min(80, 45 + trendStrength * 8 + rsiSignal * 12)),
+        stopLoss: currentPrice * (1 - (volatility * 0.025)),
+        takeProfit: currentPrice * (1 + (volatility * 0.075)),
+        confidence: Math.min(48, 38 + (rsiSignal * 5) + (macdStrength * 2)),
         get riskReward() {
           return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
         },
@@ -128,9 +131,9 @@ const Index = () => {
       },
       {
         entry: currentPrice,
-        stopLoss: currentPrice * (1 - volatility / 100),
-        takeProfit: currentPrice * (1 + volatility * 3.375 / 100),
-        confidence: Math.max(20, Math.min(80, 40 + trendStrength * 6 + rsiSignal * 10)),
+        stopLoss: currentPrice * (1 - (volatility * 0.03)),
+        takeProfit: currentPrice * (1 + (volatility * 0.09)),
+        confidence: Math.min(48, 36 + (rsiSignal * 5) + (macdStrength * 2)),
         get riskReward() {
           return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
         },
@@ -139,8 +142,6 @@ const Index = () => {
         }
       }
     ];
-
-    return scenarios;
   };
 
   const getAISuggestion = async () => {

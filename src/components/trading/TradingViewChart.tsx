@@ -12,118 +12,97 @@ interface TradingViewChartProps {
 declare global {
   interface Window {
     TradingView?: {
-      MediumWidget: new (config: any) => { remove: () => void };
+      widget: new (config: any) => { remove: () => void };
     };
-    tvWidget?: { remove: () => void } | null;
   }
 }
 
 export const TradingViewChart = ({ symbol, onChartLoad }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const widgetRef = useRef<{ remove: () => void } | null>(null);
   const isMounted = useRef(true);
-  const widgetContainerId = `trading-chart-container-${symbol}`;
 
   useEffect(() => {
-    const script = document.createElement('script');
-    let widget: { remove: () => void } | null = null;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
+  useEffect(() => {
+    const containerId = 'tradingview_widget';
+    
     const loadTradingViewWidget = () => {
-      if (!isMounted.current) return;
-      
-      try {
-        if (window.TradingView && containerRef.current) {
-          widget = new window.TradingView.MediumWidget({
-            symbols: [[symbol]],
-            chartOnly: true,
-            width: '100%',
-            height: '500',
-            locale: 'en',
-            colorTheme: 'dark',
-            autosize: false,
-            showVolume: true,
-            hideDateRanges: false,
-            hideMarketStatus: false,
-            scalePosition: 'right',
-            scaleMode: 'Normal',
-            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
-            fontSize: '12',
-            noTimeScale: false,
-            valuesTracking: '1',
-            whereToShow: widgetContainerId,
-            container_id: widgetContainerId,
-          });
+      if (!window.TradingView || !containerRef.current || !isMounted.current) return;
 
-          if (isMounted.current) {
-            setIsLoading(false);
-            onChartLoad?.();
-          }
-        } else {
-          console.error('TradingView library not loaded');
-          if (isMounted.current) {
-            toast.error("Chart failed to load. Please refresh the page.");
-          }
+      try {
+        // Clean up previous widget if it exists
+        if (widgetRef.current) {
+          widgetRef.current.remove();
+          widgetRef.current = null;
         }
+
+        // Create new widget
+        widgetRef.current = new window.TradingView.widget({
+          symbol: symbol,
+          interval: 'D',
+          container_id: containerId,
+          width: '100%',
+          height: '500',
+          theme: 'dark',
+          style: '1',
+          toolbar_bg: '#f1f3f6',
+          enable_publishing: false,
+          allow_symbol_change: true,
+          save_image: false,
+          studies: [
+            "MASimple@tv-basicstudies",
+            "RSI@tv-basicstudies",
+            "MACD@tv-basicstudies"
+          ],
+          locale: 'en'
+        });
+
+        setIsLoading(false);
+        onChartLoad?.();
       } catch (error) {
-        console.error('Error initializing TradingView widget:', error);
-        if (isMounted.current) {
-          toast.error("Failed to initialize chart. Please refresh the page.");
-        }
+        console.error('Error creating TradingView widget:', error);
+        toast.error('Failed to load chart. Please refresh the page.');
       }
     };
 
-    const initializeWidget = () => {
-      script.type = 'text/javascript';
-      script.src = 'https://s3.tradingview.com/tv.js';
-      script.async = true;
-      script.onload = loadTradingViewWidget;
-      script.onerror = () => {
-        console.error('Failed to load TradingView script');
-        if (isMounted.current) {
-          toast.error("Failed to load chart. Please check your internet connection.");
-        }
-      };
+    // Load TradingView script
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'https://s3.tradingview.com/tv.js';
+    script.async = true;
+    script.onload = loadTradingViewWidget;
+    script.onerror = () => toast.error('Failed to load chart. Please check your connection.');
+    document.head.appendChild(script);
 
-      document.head.appendChild(script);
-    };
-
-    initializeWidget();
-
-    // Cleanup function
     return () => {
-      isMounted.current = false;
-      setIsLoading(true);
-
-      // Cleanup widget
-      if (widget) {
+      if (widgetRef.current) {
         try {
-          widget.remove();
+          widgetRef.current.remove();
+          widgetRef.current = null;
         } catch (e) {
           console.error('Error removing widget:', e);
         }
       }
-
-      // Remove script tag if it exists in document
-      if (script && document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
-
-      // Clean up any leftover elements
-      const container = document.getElementById(widgetContainerId);
-      if (container) {
-        while (container.firstChild) {
-          container.removeChild(container.firstChild);
-        }
+      
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
       }
     };
-  }, [symbol, onChartLoad, widgetContainerId]);
+  }, [symbol, onChartLoad]);
 
   return (
-    <div 
-      ref={containerRef} 
-      id={widgetContainerId}
-      className="relative w-full h-[500px] rounded-lg overflow-hidden bg-trading-card border border-trading-border"
-    >
+    <div className="relative w-full h-[500px] rounded-lg overflow-hidden bg-trading-card border border-trading-border">
+      <div 
+        ref={containerRef}
+        id="tradingview_widget"
+        className="w-full h-full"
+      />
       <AnimatePresence>
         {isLoading && (
           <motion.div
