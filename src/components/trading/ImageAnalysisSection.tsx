@@ -138,63 +138,78 @@ export const ImageAnalysisSection = ({
   const isLoading = localLoading || externalLoading;
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-      className="absolute top-4 right-4 z-10 flex flex-col items-end gap-4"
-    >
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button
-                onClick={captureChart}
-                disabled={isLoading}
-                size="lg"
-                variant="ghost"
-                className="w-14 h-14 bg-trading-card/50 hover:bg-trading-card/80 backdrop-blur-sm transition-all duration-300 group"
+    <>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="absolute top-4 right-4 z-10"
+      >
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {isLoading ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  >
-                    <Loader2 className="h-8 w-8 text-trading-accent" />
-                  </motion.div>
-                ) : (
-                  <Brain className="h-8 w-8 text-trading-accent transition-transform group-hover:scale-110" />
-                )}
-              </Button>
-            </motion.div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Analyze Chart with AI</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+                <Button
+                  onClick={captureChart}
+                  disabled={isLoading}
+                  size="lg"
+                  variant="ghost"
+                  className="w-14 h-14 bg-trading-card/50 hover:bg-trading-card/80 backdrop-blur-sm transition-all duration-300 group"
+                >
+                  {isLoading ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Loader2 className="h-8 w-8 text-trading-accent" />
+                    </motion.div>
+                  ) : (
+                    <Brain className="h-8 w-8 text-trading-accent transition-transform group-hover:scale-110" />
+                  )}
+                </Button>
+              </motion.div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Analyze Chart with AI</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </motion.div>
 
       <AnimatePresence mode="wait">
         {showAnalysis && aiResponse.suggestion && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8, x: 50 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.8, x: 50 }}
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ 
               duration: 0.3,
               type: "spring",
               stiffness: 200,
               damping: 20
             }}
-            className="w-full max-w-md rounded-lg bg-trading-card/90 backdrop-blur-sm border border-trading-border p-4"
+            className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-2xl mx-auto"
           >
-            <p className="text-sm text-[#D6BCFA] leading-relaxed">{aiResponse.suggestion}</p>
+            <div className="relative mx-4">
+              <div className="bg-gradient-to-br from-trading-card/95 to-trading-card border-2 border-trading-border/50 rounded-lg shadow-xl backdrop-blur-md p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-primary-foreground mb-2">
+                      AI Analysis
+                    </h3>
+                    <p className="text-sm text-[#D6BCFA] leading-relaxed">
+                      {aiResponse.suggestion}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </>
   );
 };
