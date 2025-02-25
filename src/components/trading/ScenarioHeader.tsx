@@ -33,12 +33,6 @@ export const ScenarioHeader = ({ index, riskReward, confidence }: ScenarioHeader
     }
   };
 
-  const getConfidenceColor = (value: number) => {
-    if (value >= 80) return "bg-green-500";
-    if (value >= 60) return "bg-yellow-500";
-    return "bg-red-500";
-  };
-
   return (
     <div className="flex items-center justify-between mb-4 relative z-10">
       <div className="flex items-center gap-2">
@@ -77,7 +71,6 @@ export const ScenarioHeader = ({ index, riskReward, confidence }: ScenarioHeader
           <Progress 
             value={confidence} 
             className="h-1.5 bg-[#1A1F2C]"
-            indicatorClassName={`${getConfidenceColor(confidence)} transition-all duration-500`}
           />
         </div>
       </div>
