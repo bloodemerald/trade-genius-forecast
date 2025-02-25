@@ -1,4 +1,6 @@
+
 import { TradingCard } from "@/components/TradingCard";
+import { ArrowUpCircle, ArrowDownCircle, MinusCircle } from "lucide-react";
 
 interface TradingCardsGridProps {
   currentPrice: number;
@@ -25,6 +27,18 @@ export const TradingCardsGrid = ({
     return ((current - previous) / previous) * 100;
   };
 
+  const priceChange = calculateChange(currentPrice, previousPrice);
+
+  const PriceChangeIcon = () => {
+    if (priceChange > 0) {
+      return <ArrowUpCircle className="w-6 h-6 text-profit" />;
+    }
+    if (priceChange < 0) {
+      return <ArrowDownCircle className="w-6 h-6 text-loss" />;
+    }
+    return <MinusCircle className="w-6 h-6 text-neutral" />;
+  };
+
   const chartObservations = aiAnalysis.chartObservations?.join("\n") || [
     "Support level at 0.0525",
     "Resistance at 0.0535",
@@ -45,13 +59,26 @@ export const TradingCardsGrid = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <TradingCard
-        title="Current Price"
-        value={currentPrice}
-        change={calculateChange(currentPrice, previousPrice)}
-        isPrice
-        showPercentage
-      />
+      <div className="lg:col-span-1">
+        <TradingCard
+          title="Current Price"
+          value={currentPrice}
+          change={priceChange}
+          isPrice
+          showPercentage
+          customClasses="bg-gradient 
+            from-trading-card/80 
+            to-trading-card 
+            border-2 
+            border-trading-border 
+            hover:border-primary/50 
+            transition-all 
+            duration-300"
+          icon={<PriceChangeIcon />}
+          valueClasses="text-3xl md:text-4xl font-bold text-foreground"
+          changeClasses="text-lg font-semibold flex items-center gap-2"
+        />
+      </div>
       <TradingCard
         title="Key Chart Observations"
         value={null}

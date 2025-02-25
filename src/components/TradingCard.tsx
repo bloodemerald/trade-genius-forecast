@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils";
 import { DecorativeElements } from "@/components/trading/DecorativeElements";
 
@@ -8,6 +9,10 @@ interface TradingCardProps {
   isPrice?: boolean;
   showPercentage?: boolean;
   customContent?: string;
+  customClasses?: string;
+  icon?: React.ReactNode;
+  valueClasses?: string;
+  changeClasses?: string;
 }
 
 export const TradingCard = ({
@@ -17,6 +22,10 @@ export const TradingCard = ({
   isPrice = false,
   showPercentage = false,
   customContent,
+  customClasses,
+  icon,
+  valueClasses,
+  changeClasses,
 }: TradingCardProps) => {
   const formatValue = (val: number) => {
     if (isPrice) {
@@ -38,7 +47,10 @@ export const TradingCard = ({
 
   return (
     <DecorativeElements>
-      <div className="bg-trading-card p-6 rounded-lg border border-trading-border backdrop-blur-sm">
+      <div className={cn(
+        "bg-trading-card p-6 rounded-lg border border-trading-border backdrop-blur-sm",
+        customClasses
+      )}>
         <h3 className="text-sm font-medium text-muted-foreground mb-3">{title}</h3>
         
         {customContent ? (
@@ -49,12 +61,19 @@ export const TradingCard = ({
           </div>
         ) : (
           <div className="space-y-1">
-            <div className="text-2xl font-semibold">
+            <div className={cn("text-2xl font-semibold", valueClasses)}>
               {value !== null && formatValue(value)}
             </div>
             {showPercentage && (
-              <div className={cn("text-sm font-medium", getChangeColor(change))}>
-                {change > 0 ? "+" : ""}{change.toFixed(2)}%
+              <div className={cn(
+                "text-sm font-medium flex items-center gap-2",
+                getChangeColor(change),
+                changeClasses
+              )}>
+                {icon}
+                <span>
+                  {change > 0 ? "+" : ""}{change.toFixed(2)}%
+                </span>
               </div>
             )}
           </div>
