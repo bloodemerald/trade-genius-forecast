@@ -1,8 +1,11 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface PositionCalculatorProps {
   entryPrice: number;
@@ -12,6 +15,12 @@ interface PositionCalculatorProps {
 export const PositionCalculator = ({ entryPrice, stopLoss }: PositionCalculatorProps) => {
   const [accountBalance, setAccountBalance] = useState<string>("");
   const [riskPercentage, setRiskPercentage] = useState<string>("1");
+  const [position, setPosition] = useState<{
+    riskAmount: number;
+    positionSize: number;
+    stopDistance: number;
+  } | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   const calculatePosition = () => {
     if (!accountBalance || !riskPercentage) return null;
@@ -32,7 +41,26 @@ export const PositionCalculator = ({ entryPrice, stopLoss }: PositionCalculatorP
     };
   };
 
-  const position = calculatePosition();
+  // Auto-calculate when inputs change
+  useEffect(() => {
+    if (accountBalance && riskPercentage) {
+      setIsCalculating(true);
+      const newPosition = calculatePosition();
+      setTimeout(() => {
+        setPosition(newPosition);
+        setIsCalculating(false);
+      }, 300); // Add a small delay for the animation
+    }
+  }, [accountBalance, riskPercentage, entryPrice, stopLoss]);
+
+  const handleManualCalculate = () => {
+    setIsCalculating(true);
+    const newPosition = calculatePosition();
+    setTimeout(() => {
+      setPosition(newPosition);
+      setIsCalculating(false);
+    }, 300);
+  };
 
   return (
     <div className="space-y-4 p-4 bg-[#1A1F2C]/50 rounded-lg border border-[#9b87f5]/20">
@@ -81,22 +109,38 @@ export const PositionCalculator = ({ entryPrice, stopLoss }: PositionCalculatorP
           />
         </div>
 
-        {position && (
-          <div className="space-y-2 mt-4 p-3 bg-[#1A1F2C] rounded border border-[#9b87f5]/30">
-            <div className="flex justify-between">
-              <span className="text-[#D6BCFA]/70">Risk Amount:</span>
-              <span className="text-white font-mono">${position.riskAmount.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#D6BCFA]/70">Position Size:</span>
-              <span className="text-white font-mono">{position.positionSize.toFixed(8)} units</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#D6BCFA]/70">Stop Distance:</span>
-              <span className="text-white font-mono">{position.stopDistance.toFixed(8)}</span>
-            </div>
-          </div>
-        )}
+        <Button
+          onClick={handleManualCalculate}
+          className="w-full bg-[#9b87f5] hover:bg-[#7E69AB] text-white transition-colors"
+          disabled={!accountBalance || !riskPercentage || isCalculating}
+        >
+          Calculate Position
+        </Button>
+
+        <AnimatePresence>
+          {position && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-2 mt-4 p-3 bg-[#1A1F2C] rounded border border-[#9b87f5]/30"
+            >
+              <div className="flex justify-between">
+                <span className="text-[#D6BCFA]/70">Risk Amount:</span>
+                <span className="text-white font-mono">${position.riskAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#D6BCFA]/70">Position Size:</span>
+                <span className="text-white font-mono">{position.positionSize.toFixed(8)} units</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#D6BCFA]/70">Stop Distance:</span>
+                <span className="text-white font-mono">{position.stopDistance.toFixed(8)}</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
