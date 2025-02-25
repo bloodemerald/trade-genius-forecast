@@ -85,68 +85,6 @@ const Index = () => {
     autoAnalyze();
   }, []);
 
-  const calculateScenarios = (currentPrice: number) => {
-    if (!currentPrice || isNaN(currentPrice)) {
-      return Array(3).fill({
-        entry: 0,
-        stopLoss: 0,
-        takeProfit: 0,
-        confidence: 0,
-        riskReward: 0,
-        potential: 0
-      });
-    }
-
-    const suggestion = aiResponse.suggestion || '';
-    const supportMatch = suggestion.match(/support at \$?(\d+\.?\d*)/i);
-    const resistanceMatch = suggestion.match(/resistance at \$?(\d+\.?\d*)/i);
-    
-    const supportLevel = supportMatch ? parseFloat(supportMatch[1]) : currentPrice * 0.98;
-    const resistanceLevel = resistanceMatch ? parseFloat(resistanceMatch[1]) : currentPrice * 1.02;
-    
-    const volatility = Math.abs((data.price[data.price.length - 1] - data.price[0]) / data.price[0]);
-    const baseRR = aiResponse.sentiment > 0 ? 2.5 : 2.0;
-    
-    return [
-      {
-        entry: currentPrice,
-        stopLoss: aiResponse.sentiment > 0 ? supportLevel : resistanceLevel,
-        takeProfit: aiResponse.sentiment > 0 ? resistanceLevel : supportLevel,
-        confidence: Math.min(85, aiResponse.confidence + 10),
-        get riskReward() {
-          return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
-        },
-        get potential() {
-          return ((this.takeProfit - this.entry) / this.entry) * 100;
-        }
-      },
-      {
-        entry: currentPrice,
-        stopLoss: aiResponse.sentiment > 0 ? supportLevel * 0.99 : resistanceLevel * 1.01,
-        takeProfit: aiResponse.sentiment > 0 ? resistanceLevel * 1.01 : supportLevel * 0.99,
-        confidence: Math.min(75, aiResponse.confidence),
-        get riskReward() {
-          return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
-        },
-        get potential() {
-          return ((this.takeProfit - this.entry) / this.entry) * 100;
-        }
-      },
-      {
-        entry: currentPrice,
-        stopLoss: aiResponse.sentiment > 0 ? supportLevel * 0.98 : resistanceLevel * 1.02,
-        takeProfit: aiResponse.sentiment > 0 ? resistanceLevel * 1.02 : supportLevel * 0.98,
-        confidence: Math.max(40, aiResponse.confidence - 10),
-        get riskReward() {
-          return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
-        },
-        get potential() {
-          return ((this.takeProfit - this.entry) / this.entry) * 100;
-        }
-      }
-    ];
-  };
-
   const getAISuggestion = async () => {
     setLoading(true);
     try {
@@ -163,7 +101,12 @@ const Index = () => {
       });
 
       if (error) throw error;
+      console.log('AI Response:', aiData); // Debug log
       setAIResponse(aiData);
+
+      const currentPrice = data.price[data.price.length - 1];
+      const scenarios = calculateScenarios(currentPrice);
+      console.log('Calculated Scenarios:', scenarios); // Debug log
     } catch (error) {
       console.error('Error getting AI suggestion:', error);
       toast({
@@ -174,6 +117,72 @@ const Index = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateScenarios = (currentPrice: number) => {
+    if (!currentPrice || isNaN(currentPrice)) {
+      return Array(3).fill({
+        entry: 0,
+        stopLoss: 0,
+        takeProfit: 0,
+        confidence: 0,
+        riskReward: 0,
+        potential: 0
+      });
+    }
+
+    const suggestion = aiResponse.suggestion || '';
+    console.log('Calculating scenarios with suggestion:', suggestion); // Debug log
+    
+    const supportMatch = suggestion.match(/support at \$?(\d+\.?\d*)/i);
+    const resistanceMatch = suggestion.match(/resistance at \$?(\d+\.?\d*)/i);
+    
+    const supportLevel = supportMatch ? parseFloat(supportMatch[1]) : currentPrice * 0.98;
+    const resistanceLevel = resistanceMatch ? parseFloat(resistanceMatch[1]) : currentPrice * 1.02;
+    
+    console.log('Support Level:', supportLevel); // Debug log
+    console.log('Resistance Level:', resistanceLevel); // Debug log
+    
+    const direction = aiResponse.sentiment > 0 ? 1 : -1;
+    
+    return [
+      {
+        entry: currentPrice,
+        stopLoss: direction > 0 ? supportLevel : resistanceLevel,
+        takeProfit: direction > 0 ? resistanceLevel : supportLevel,
+        confidence: Math.min(85, aiResponse.confidence + 10),
+        get riskReward() {
+          return parseFloat(Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss)).toFixed(2));
+        },
+        get potential() {
+          return parseFloat(((this.takeProfit - this.entry) / this.entry * 100).toFixed(2));
+        }
+      },
+      {
+        entry: currentPrice,
+        stopLoss: direction > 0 ? supportLevel * 0.99 : resistanceLevel * 1.01,
+        takeProfit: direction > 0 ? resistanceLevel * 1.01 : supportLevel * 0.99,
+        confidence: Math.min(75, aiResponse.confidence),
+        get riskReward() {
+          return parseFloat(Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss)).toFixed(2));
+        },
+        get potential() {
+          return parseFloat(((this.takeProfit - this.entry) / this.entry * 100).toFixed(2));
+        }
+      },
+      {
+        entry: currentPrice,
+        stopLoss: direction > 0 ? supportLevel * 0.98 : resistanceLevel * 1.02,
+        takeProfit: direction > 0 ? resistanceLevel * 1.02 : supportLevel * 0.98,
+        confidence: Math.max(40, aiResponse.confidence - 10),
+        get riskReward() {
+          return parseFloat(Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss)).toFixed(2));
+        },
+        get potential() {
+          return parseFloat(((this.takeProfit - this.entry) / this.entry * 100).toFixed(2));
+        }
+      }
+    ];
   };
 
   const calculateChange = (current: number, previous: number) => {

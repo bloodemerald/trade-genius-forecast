@@ -113,38 +113,42 @@ export const ImageAnalysisSection = ({
         if (reader.result) {
           try {
             const currentPrice = currentData.price[currentData.price.length - 1];
-            const scenarios = calculateScenarios(
-              currentPrice,
-              aiResponse.sentiment,
-              aiResponse.confidence
-            );
             
-            // Get chart analysis from AI response
-            const observations = aiResponse.suggestion.match(/Support.*?(?=\.)/g) || [];
-            const signals = aiResponse.suggestion.match(/Technical.*?(?=\.)/g) || [];
-            const actions = aiResponse.suggestion.match(/Price.*?(?=\.)/g) || [];
-
+            // Get AI analysis first
+            await onGetAISuggestion();
+            
+            // Extract support and resistance levels from AI suggestion
+            const suggestion = aiResponse.suggestion || '';
+            console.log('AI Suggestion:', suggestion); // Debug log
+            
+            const supportMatch = suggestion.match(/support at \$?(\d+\.?\d*)/i);
+            const resistanceMatch = suggestion.match(/resistance at \$?(\d+\.?\d*)/i);
+            
+            console.log('Support Match:', supportMatch); // Debug log
+            console.log('Resistance Match:', resistanceMatch); // Debug log
+            
+            const supportLevel = supportMatch ? parseFloat(supportMatch[1]) : currentPrice * 0.98;
+            const resistanceLevel = resistanceMatch ? parseFloat(resistanceMatch[1]) : currentPrice * 1.02;
+            
+            // Extract observations from AI suggestion
+            const observations = suggestion.split('.').filter(s => s.trim().length > 0);
+            
             const updatedData: TradingData = {
               ...currentData,
-              chartObservations: observations.length > 0 ? observations : [
-                "Support and resistance levels analyzed",
-                "Chart patterns identified",
+              chartObservations: [
+                supportMatch ? `Support level at $${supportLevel}` : "Support levels analyzed",
+                resistanceMatch ? `Resistance level at $${resistanceLevel}` : "Resistance levels analyzed",
                 "Market structure evaluated"
               ],
-              tradeSignals: signals.length > 0 ? signals : [
-                "Technical indicators assessed",
-                "Volume analysis completed",
-                "Trend direction identified"
-              ],
-              priceAction: actions.length > 0 ? actions : [
-                "Price structure analyzed",
-                "Key levels mapped",
-                "Market dynamics evaluated"
+              tradeSignals: observations.slice(0, 3).map(obs => obs.trim()),
+              priceAction: [
+                `Current price at $${currentPrice}`,
+                `Trading ${currentPrice > supportLevel ? 'above' : 'below'} support`,
+                `${aiResponse.sentiment > 0 ? 'Bullish' : 'Bearish'} momentum detected`
               ]
             };
 
             await onAnalysisComplete(updatedData);
-            await onGetAISuggestion();
             
             toast.success("Analysis complete!");
           } catch (error) {
