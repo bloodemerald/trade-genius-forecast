@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { TradingData, AIResponse } from "@/types/trading";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -22,12 +22,13 @@ interface ImageAnalysisSectionProps {
 }
 
 export const ImageAnalysisSection = ({
-  loading,
+  loading: externalLoading,
   aiResponse,
   currentData,
   onAnalysisComplete,
   onGetAISuggestion
 }: ImageAnalysisSectionProps) => {
+  const [localLoading, setLocalLoading] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
 
   useEffect(() => {
@@ -40,9 +41,9 @@ export const ImageAnalysisSection = ({
     }
   }, [aiResponse.suggestion]);
 
-  const captureChart = async () => {
+  const captureChart = useCallback(async () => {
     try {
-      // Try multiple possible selectors for the chart and cast to HTMLElement
+      setLocalLoading(true);
       const chartElement = (
         document.querySelector('#tradingview_widget') || 
         document.querySelector('.trading-chart-container') ||
@@ -51,6 +52,7 @@ export const ImageAnalysisSection = ({
                           
       if (!chartElement) {
         toast.error("Chart not found. Please wait for it to load fully.");
+        setLocalLoading(false);
         return;
       }
 
@@ -65,7 +67,8 @@ export const ImageAnalysisSection = ({
         logging: false,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: null
+        backgroundColor: null,
+        removeContainer: true // Remove temporary container to prevent DOM modifications
       });
       
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
@@ -110,7 +113,7 @@ export const ImageAnalysisSection = ({
             };
 
             // Update the UI with analyzed data
-            onAnalysisComplete(updatedData);
+            await onAnalysisComplete(updatedData);
 
             // Process AI suggestion
             await onGetAISuggestion();
@@ -119,6 +122,8 @@ export const ImageAnalysisSection = ({
           } catch (error) {
             console.error('Error processing analysis:', error);
             toast.error("Failed to analyze chart. Please try again.");
+          } finally {
+            setLocalLoading(false);
           }
         }
       };
@@ -126,8 +131,11 @@ export const ImageAnalysisSection = ({
     } catch (error) {
       console.error('Error capturing chart:', error);
       toast.error("Failed to analyze chart. Please make sure the chart is fully loaded.");
+      setLocalLoading(false);
     }
-  };
+  }, [currentData, onAnalysisComplete, onGetAISuggestion]);
+
+  const isLoading = localLoading || externalLoading;
 
   return (
     <motion.div 
@@ -145,12 +153,12 @@ export const ImageAnalysisSection = ({
             >
               <Button
                 onClick={captureChart}
-                disabled={loading}
+                disabled={isLoading}
                 size="lg"
                 variant="ghost"
                 className="w-14 h-14 bg-trading-card/50 hover:bg-trading-card/80 backdrop-blur-sm transition-all duration-300 group"
               >
-                {loading ? (
+                {isLoading ? (
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
