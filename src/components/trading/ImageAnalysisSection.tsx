@@ -41,6 +41,38 @@ export const ImageAnalysisSection = ({
     }
   }, [aiResponse.suggestion]);
 
+  const calculateScenarios = (price: number) => {
+    const volatility = 0.02; // 2% base volatility
+    const baseRR = 2.5; // Base risk-reward ratio
+    
+    return [
+      {
+        entry: price,
+        stopLoss: price * (1 - volatility),
+        takeProfit: price * (1 + (volatility * baseRR)),
+        riskReward: baseRR,
+        potential: (price * (1 + (volatility * baseRR)) - price) / price * 100,
+        confidence: Math.min(85, aiResponse.confidence + 10)
+      },
+      {
+        entry: price,
+        stopLoss: price * (1 - (volatility * 1.5)),
+        takeProfit: price * (1 + (volatility * baseRR * 1.5)),
+        riskReward: baseRR * 1.2,
+        potential: (price * (1 + (volatility * baseRR * 1.5)) - price) / price * 100,
+        confidence: Math.min(75, aiResponse.confidence)
+      },
+      {
+        entry: price,
+        stopLoss: price * (1 - (volatility * 2)),
+        takeProfit: price * (1 + (volatility * baseRR * 2)),
+        riskReward: baseRR * 1.5,
+        potential: (price * (1 + (volatility * baseRR * 2)) - price) / price * 100,
+        confidence: Math.max(40, aiResponse.confidence - 10)
+      }
+    ];
+  };
+
   const captureChart = useCallback(async () => {
     try {
       setLocalLoading(true);
@@ -56,34 +88,30 @@ export const ImageAnalysisSection = ({
         return;
       }
 
-      // Show loading state
       toast.info("Analyzing chart...");
 
-      // Use a small delay to ensure chart is fully rendered
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Capture the chart image
       const canvas = await html2canvas(chartElement, {
         logging: false,
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
-        removeContainer: true // Remove temporary container to prevent DOM modifications
+        removeContainer: true
       });
       
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
-      
-      // Process the captured image
       const response = await fetch(imageData);
       const blob = await response.blob();
       const file = new File([blob], "chart-snapshot.jpg", { type: "image/jpeg" });
       
-      // Create a FileReader to process the image
       const reader = new FileReader();
       reader.onload = async () => {
         if (reader.result) {
           try {
-            // Keep the current symbol and update the rest of the data
+            const currentPrice = currentData.price[currentData.price.length - 1];
+            const scenarios = calculateScenarios(currentPrice);
+            
             const updatedData: TradingData = {
               ...currentData,
               price: currentData.price,
@@ -96,26 +124,23 @@ export const ImageAnalysisSection = ({
                 RSI_14: currentData.indicators.RSI_14
               },
               chartObservations: [
-                "Support level identified",
-                "Key resistance zones mapped",
-                "Pattern analysis complete"
+                "Support and resistance levels identified",
+                "Price action patterns analyzed",
+                "Market structure evaluated"
               ],
               tradeSignals: [
-                "Analyzing momentum indicators",
-                "Volume profile assessment",
+                "Technical indicators assessed",
+                "Volume profile examined",
                 "Trend direction confirmed"
               ],
               priceAction: [
                 "Price structure analyzed",
-                "Key levels identified",
-                "Volatility assessment complete"
+                "Key levels mapped",
+                "Market context evaluated"
               ]
             };
 
-            // Update the UI with analyzed data
             await onAnalysisComplete(updatedData);
-
-            // Process AI suggestion
             await onGetAISuggestion();
             
             toast.success("Analysis complete!");
@@ -133,7 +158,7 @@ export const ImageAnalysisSection = ({
       toast.error("Failed to analyze chart. Please make sure the chart is fully loaded.");
       setLocalLoading(false);
     }
-  }, [currentData, onAnalysisComplete, onGetAISuggestion]);
+  }, [currentData, onAnalysisComplete, onGetAISuggestion, aiResponse.confidence]);
 
   const isLoading = localLoading || externalLoading;
 

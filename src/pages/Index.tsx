@@ -97,19 +97,15 @@ const Index = () => {
       });
     }
 
-    const priceHistory = data.price;
-    const volatility = Math.abs((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100;
-    
-    const rsiSignal = data.indicators.RSI_14 > 70 ? -1 : data.indicators.RSI_14 < 30 ? 1 : 0;
-    
-    const macdStrength = Math.abs(data.indicators.MACD[0]);
+    const volatility = Math.abs((data.price[data.price.length - 1] - data.price[0]) / data.price[0]) * 100;
+    const baseRR = aiResponse.sentiment > 0 ? 2.5 : 2.0;
     
     return [
       {
         entry: currentPrice,
         stopLoss: currentPrice * (1 - (volatility * 0.02)),
-        takeProfit: currentPrice * (1 + (volatility * 0.06)),
-        confidence: Math.min(48, 40 + (rsiSignal * 5) + (macdStrength * 2)),
+        takeProfit: currentPrice * (1 + (volatility * 0.05)),
+        confidence: Math.min(85, aiResponse.confidence + 10),
         get riskReward() {
           return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
         },
@@ -120,8 +116,8 @@ const Index = () => {
       {
         entry: currentPrice,
         stopLoss: currentPrice * (1 - (volatility * 0.025)),
-        takeProfit: currentPrice * (1 + (volatility * 0.075)),
-        confidence: Math.min(48, 38 + (rsiSignal * 5) + (macdStrength * 2)),
+        takeProfit: currentPrice * (1 + (volatility * 0.0625)),
+        confidence: Math.min(75, aiResponse.confidence),
         get riskReward() {
           return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
         },
@@ -132,8 +128,8 @@ const Index = () => {
       {
         entry: currentPrice,
         stopLoss: currentPrice * (1 - (volatility * 0.03)),
-        takeProfit: currentPrice * (1 + (volatility * 0.09)),
-        confidence: Math.min(48, 36 + (rsiSignal * 5) + (macdStrength * 2)),
+        takeProfit: currentPrice * (1 + (volatility * 0.075)),
+        confidence: Math.max(40, aiResponse.confidence - 10),
         get riskReward() {
           return Math.abs((this.takeProfit - this.entry) / (this.entry - this.stopLoss));
         },
