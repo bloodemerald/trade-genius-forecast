@@ -2,6 +2,7 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 
 interface ScenarioHeaderProps {
   index: number;
@@ -32,6 +33,12 @@ export const ScenarioHeader = ({ index, riskReward, confidence }: ScenarioHeader
     }
   };
 
+  const getConfidenceColor = (value: number) => {
+    if (value >= 80) return "bg-green-500";
+    if (value >= 60) return "bg-yellow-500";
+    return "bg-red-500";
+  };
+
   return (
     <div className="flex items-center justify-between mb-4 relative z-10">
       <div className="flex items-center gap-2">
@@ -47,7 +54,7 @@ export const ScenarioHeader = ({ index, riskReward, confidence }: ScenarioHeader
         </Tooltip>
         <BookOpen className="text-[#9b87f5]" size={16} />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
         <Tooltip>
           <TooltipTrigger>
             <Button
@@ -62,24 +69,17 @@ export const ScenarioHeader = ({ index, riskReward, confidence }: ScenarioHeader
             <p>Click to show position on chart - Risk to Reward ratio</p>
           </TooltipContent>
         </Tooltip>
-        <Tooltip>
-          <TooltipTrigger>
-            <span 
-              className={`text-sm font-medium px-3 py-1 rounded-full border ${
-                confidence >= 80 
-                  ? "text-green-400 border-green-400/30 bg-green-400/10"
-                  : confidence >= 60
-                  ? "text-yellow-400 border-yellow-400/30 bg-yellow-400/10"
-                  : "text-red-400 border-red-400/30 bg-red-400/10"
-              }`}
-            >
-              {confidence.toFixed(0)}% Confidence
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>AI-generated confidence score based on technical analysis</p>
-          </TooltipContent>
-        </Tooltip>
+        <div className="flex flex-col gap-1 min-w-[120px]">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-[#D6BCFA]/70">Confidence</span>
+            <span className="text-xs font-medium text-[#D6BCFA]">{confidence.toFixed(0)}%</span>
+          </div>
+          <Progress 
+            value={confidence} 
+            className="h-1.5 bg-[#1A1F2C]"
+            indicatorClassName={`${getConfidenceColor(confidence)} transition-all duration-500`}
+          />
+        </div>
       </div>
     </div>
   );
