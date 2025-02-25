@@ -29,10 +29,12 @@ export const ImageAnalysisSection = ({
 }: ImageAnalysisSectionProps) => {
   const captureChart = async () => {
     try {
-      // Try multiple possible selectors for the chart
-      const chartElement = document.querySelector('#tradingview_widget') || 
-                          document.querySelector('.trading-chart-container') ||
-                          document.querySelector('.tradingview-widget-container');
+      // Try multiple possible selectors for the chart and cast to HTMLElement
+      const chartElement = (
+        document.querySelector('#tradingview_widget') || 
+        document.querySelector('.trading-chart-container') ||
+        document.querySelector('.tradingview-widget-container')
+      ) as HTMLElement | null;
                           
       if (!chartElement) {
         toast.error("Chart not found. Please wait for it to load fully.");
