@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { TradeScenario } from "@/components/TradeScenario";
 
@@ -17,7 +18,7 @@ interface TradingScenariosSectionProps {
 
 export const TradingScenariosSection = ({ scenarios, confidence }: TradingScenariosSectionProps) => {
   return (
-    <div>
+    <div className="w-full overflow-hidden">
       <motion.h2 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -25,7 +26,7 @@ export const TradingScenariosSection = ({ scenarios, confidence }: TradingScenar
       >
         Trading Scenarios
       </motion.h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
         {scenarios.map((scenario, index) => (
           <TradeScenario 
             key={index} 

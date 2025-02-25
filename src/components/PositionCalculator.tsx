@@ -28,11 +28,11 @@ export const PositionCalculator = ({ entryPrice, stopLoss }: PositionCalculatorP
     const balance = parseFloat(accountBalance);
     const risk = parseFloat(riskPercentage);
     
-    if (isNaN(balance) || isNaN(risk)) return null;
+    if (isNaN(balance) || isNaN(risk) || !entryPrice || !stopLoss) return null;
 
     const riskAmount = (balance * risk) / 100;
     const stopDistance = Math.abs(entryPrice - stopLoss);
-    const positionSize = (riskAmount / stopDistance);
+    const positionSize = (riskAmount / stopDistance) * entryPrice;
     
     return {
       riskAmount,
@@ -41,25 +41,11 @@ export const PositionCalculator = ({ entryPrice, stopLoss }: PositionCalculatorP
     };
   };
 
-  // Auto-calculate when inputs change
-  useEffect(() => {
-    if (accountBalance && riskPercentage) {
-      setIsCalculating(true);
-      const newPosition = calculatePosition();
-      setTimeout(() => {
-        setPosition(newPosition);
-        setIsCalculating(false);
-      }, 300); // Add a small delay for the animation
-    }
-  }, [accountBalance, riskPercentage, entryPrice, stopLoss]);
-
   const handleManualCalculate = () => {
     setIsCalculating(true);
     const newPosition = calculatePosition();
-    setTimeout(() => {
-      setPosition(newPosition);
-      setIsCalculating(false);
-    }, 300);
+    setPosition(newPosition);
+    setIsCalculating(false);
   };
 
   return (
@@ -72,9 +58,9 @@ export const PositionCalculator = ({ entryPrice, stopLoss }: PositionCalculatorP
               <Info size={16} />
             </button>
           </HoverCardTrigger>
-          <HoverCardContent className="w-80 bg-[#1A1F2C] border border-[#9b87f5]/30 text-white p-4">
+          <HoverCardContent side="bottom" className="w-80 p-4 bg-[#1A1F2C] border border-[#9b87f5]/30 text-white">
             <p className="text-sm">
-              This calculator helps you determine the appropriate position size based on your account balance and risk tolerance.
+              This calculator helps determine position size based on your account balance and risk tolerance.
               It's recommended to risk no more than 1-2% of your account on any single trade.
             </p>
           </HoverCardContent>
@@ -83,7 +69,7 @@ export const PositionCalculator = ({ entryPrice, stopLoss }: PositionCalculatorP
 
       <div className="space-y-3">
         <div>
-          <Label htmlFor="balance" className="text-[#D6BCFA]/70">Account Balance</Label>
+          <Label htmlFor="balance" className="text-[#D6BCFA]/70 mb-1 block">Account Balance</Label>
           <Input
             id="balance"
             type="number"
@@ -95,7 +81,7 @@ export const PositionCalculator = ({ entryPrice, stopLoss }: PositionCalculatorP
         </div>
 
         <div>
-          <Label htmlFor="risk" className="text-[#D6BCFA]/70">Risk Percentage</Label>
+          <Label htmlFor="risk" className="text-[#D6BCFA]/70 mb-1 block">Risk Percentage</Label>
           <Input
             id="risk"
             type="number"
@@ -124,19 +110,19 @@ export const PositionCalculator = ({ entryPrice, stopLoss }: PositionCalculatorP
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="space-y-2 mt-4 p-3 bg-[#1A1F2C] rounded border border-[#9b87f5]/30"
+              className="mt-4 space-y-2 p-3 bg-[#1A1F2C] rounded border border-[#9b87f5]/30"
             >
-              <div className="flex justify-between">
+              <div className="flex justify-between text-sm">
                 <span className="text-[#D6BCFA]/70">Risk Amount:</span>
                 <span className="text-white font-mono">${position.riskAmount.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between text-sm">
                 <span className="text-[#D6BCFA]/70">Position Size:</span>
-                <span className="text-white font-mono">{position.positionSize.toFixed(8)} units</span>
+                <span className="text-white font-mono">{position.positionSize.toFixed(4)} units</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between text-sm">
                 <span className="text-[#D6BCFA]/70">Stop Distance:</span>
-                <span className="text-white font-mono">{position.stopDistance.toFixed(8)}</span>
+                <span className="text-white font-mono">${position.stopDistance.toFixed(4)}</span>
               </div>
             </motion.div>
           )}
